@@ -307,7 +307,7 @@ def B_k(lamda, k, x, y):
              + ((lamda**2) * B_k(lamda, k-1, sub_x, sub_y) if x[-1] == y[-1] else 0)
            )
 
-def string_kernel(lamda, k, x, y):
+def string_kernel(x, y, lamda, k):
     if k == 0:
         return 1
     if len(x) < k or len(y) < k:

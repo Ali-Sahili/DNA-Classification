@@ -3,7 +3,7 @@ import numpy as np
 from kernels_for_sequence import *
 from tqdm import tqdm
 from utils import normalize_gram
-
+from functools import partial
 # Linear kernel    
 def Linear_kernel(x,y):
   return np.dot(x, y.T)
@@ -72,47 +72,71 @@ def MKL(x, y, K1, K2, t=0.2): # add two or more kernels
 # Compute the Gram matrix  
 def RBF_Gram_Matrix(X, Y, kernel="RBF", gamma=0.01, degree=2, shift=2, normalize=False,
                            gap=2, nplets=3):
-    
+
+    if kernel == "linear":
+        ker = Linear_kernel
+    elif kernel == "shift_linear":
+        ker = shifted_lineal_kernel
+    elif kernel == "quadratic":
+        ker = Quadratic_kernel
+    elif kernel == "r_quadratic":
+        ker = r_quadratic_kernel
+    elif kernel == "rbf":
+        ker = partial(RBF_kernel, gamma=gamma)
+    elif kernel == "sigmoid":
+        ker = sigmoid_kernel
+    elif kernel == "exp_cos":
+        ker = exp_cos_kernel
+    elif kernel == "periodic":
+        ker = periodic_kernel
+    elif kernel == "l_periodic":
+        ker = locally_periodic_kernel
+    elif kernel == "polynomial":
+        ker = partial(Polynomial_kernel, d=degree, gamma=gamma)
+    elif kernel == "MKL":
+        ker = partial(MKL, K1=sigmoid_kernel, K2=RBF_kernel)
+    #                       For strings
+    elif kernel == "spectrum":
+        ker = partial(spectrum_kernel, k=nplets)
+    elif kernel == "substring":
+        ker = partial(substring_kernel, k=nplets, delta=shift)
+    elif kernel == "substring_mis":
+        ker = substring_mismatch_kernel
+    elif kernel == "substring_mis_w":
+        ker = partial(w_substring_mismatch_kernel, k=nplets, delta=shift)
+    elif kernel == "wdk":
+        ker = Weight_Degree_Kernel
+    elif kernel == "wdkws":
+        ker = partial(Weight_Degree_Kernel_w_Shifts, d=degree, S=shift)
+    elif kernel == "gappy":
+        ker = partial(gappy_kernel, k=nplets, g=gap)
+    elif kernel == "MAK":
+        ker = partial(mean_alignement_kernel, sigma=gamma)
+    elif kernel == "LAK":
+        ker = local_align_kernel
+    elif kernel == "LAK_affine":
+        ker = affine_align
+    elif kernel == "needleman_wunsch":
+        ker = Needleman_Wunsch
+    elif kernel == "smith_waterman":
+        ker = Smith_Waterman
+    elif kernel == "string":
+        ker = partial(string_kernel, lamda=gamma, k=nplets)
+    else:
+        raise NotImplemented
+
+
     if len(Y)==0:
         n = X.shape[0]
         gram_matrix = np.zeros((n, n), dtype=np.float32)
 
+
         for i in tqdm(range(n), desc="Computing Gram Matrix"):
             #for j in tqdm(range(i,n), desc="Nested loop"):
             for j in range(i,n):
-                if kernel=="linear": gram_matrix[i,j] = Linear_kernel(X[i],X[j])
-                elif kernel=="shift_linear": gram_matrix[i,j] = shifted_lineal_kernel(X[i],X[j])
-                elif kernel=="quadratic": gram_matrix[i,j] = Quadratic_kernel(X[i],X[j])
-                elif kernel=="r_quadratic": gram_matrix[i,j] = r_quadratic_kernel(X[i],X[j])
-                elif kernel=="rbf": gram_matrix[i,j] = RBF_kernel(X[i],X[j],gamma)
-                elif kernel=="sigmoid": gram_matrix[i,j] = sigmoid_kernel(X[i],X[j])
-                elif kernel=="exp_cos": gram_matrix[i,j] = exp_cos_kernel(X[i],X[j])
-                elif kernel=="periodic": gram_matrix[i,j] = periodic_kernel(X[i],X[j])
-                elif kernel=="l_periodic": gram_matrix[i,j] = locally_periodic_kernel(X[i],X[j])
-                elif kernel=="polynomial": gram_matrix[i,j] = Polynomial_kernel(X[i],X[j], 
-                                                                               degree, gamma)
-                elif kernel=="MKL": gram_matrix[i,j] = MKL(X[i],X[j], K1=sigmoid_kernel,
-                                                                      K2=RBF_kernel)
-                #                       For strings    
-                elif kernel=="spectrum": gram_matrix[i,j] = spectrum_kernel(X[i],X[j], k=nplets)
-                elif kernel=="substring":gram_matrix[i,j] = substring_kernel(X[i],X[j],k=nplets,
-                                                                                 delta=shift)
-                elif kernel=="substring_mis":gram_matrix[i,j] = substring_mismatch_kernel(X[i], 
-                                                                 X[j], k=nplets, delta=shift)
-                elif kernel=="substring_mis_w":gram_matrix[i,j] = w_substring_mismatch_kernel(
-                                                             X[i], X[j], k=nplets, delta=shift)
-                                                                                              
-                elif kernel=="wdk":gram_matrix[i,j] = Weight_Degree_Kernel(X[i],X[j],degree,i,j)
-                elif kernel=="wdkws":gram_matrix[i,j] = Weight_Degree_Kernel_w_Shifts(X[i],X[j],
-                                                                         degree, shift)
-                elif kernel=="gappy": gram_matrix[i,j] = gappy_kernel(X[i],X[j], nplets, gap)
-                elif kernel=="MAK": gram_matrix[i,j] = mean_alignement_kernel(X[i], X[j], gamma)
-                elif kernel=="LAK": gram_matrix[i,j] = local_align_kernel(X[i],X[j])
-                elif kernel=="LAK_affine": gram_matrix[i,j] = affine_align(X[i],X[j])
-                elif kernel=="needleman_wunsch": gram_matrix[i,j] = Needleman_Wunsch(X[i],X[j])
-                elif kernel=="smith_waterman": gram_matrix[i,j] = Smith_Waterman(X[i],X[j])
-                elif kernel=="string": gram_matrix[i,j] = string_kernel(gamma,nplets,X[i], X[j])
-                else: raise NotImplemented
+                if kernel == "wdk":
+                    gram_matrix[i, j] = Weight_Degree_Kernel(X[i], X[j], degree, i, j)
+                gram_matrix[i, j] = ker(X[i],X[j])
                 gram_matrix[j,i] = gram_matrix[i,j] # + 0.0001
         if normalize: gram_matrix = normalize_gram(gram_matrix)
         return gram_matrix
@@ -124,38 +148,10 @@ def RBF_Gram_Matrix(X, Y, kernel="RBF", gamma=0.01, degree=2, shift=2, normalize
         for i in tqdm(range(len_X), desc="Computing Gram Matrix"):
             #for j in tqdm(range(i,len_Y), desc="Nested loop"):
             for j in range(i,len_Y):
-                if kernel=="linear": gram_matrix[i,j] = Linear_kernel(X[i],Y[j])
-                elif kernel=="shift_linear": gram_matrix[i,j] = shifted_lineal_kernel(X[i],Y[j])
-                elif kernel=="quadratic": gram_matrix[i,j] = Quadratic_kernel(X[i],Y[j])
-                elif kernel=="r_quadratic": gram_matrix[i,j] = r_quadratic_kernel(X[i],Y[j])
-                elif kernel=="rbf": gram_matrix[i,j] = RBF_kernel(X[i],Y[j],gamma)
-                elif kernel=="sigmoid": gram_matrix[i,j] = sigmoid_kernel(X[i],Y[j])
-                elif kernel=="exp_cos": gram_matrix[i,j] = exp_cos_kernel(X[i],Y[j])
-                elif kernel=="periodic": gram_matrix[i,j] = periodic_kernel(X[i],Y[j])
-                elif kernel=="l_periodic": gram_matrix[i,j] = locally_periodic_kernel(X[i],Y[j])
-                elif kernel=="polynomial": gram_matrix[i,j] = Polynomial_kernel(X[i],Y[j], 
-                                                                               degree, gamma)
-                elif kernel=="MKL": gram_matrix[i,j] = MKL(X[i],Y[j], K1=sigmoid_kernel,
-                                                                      K2=RBF_kernel)
-                
-                #                       For strings    
-                elif kernel=="spectrum": gram_matrix[i,j] = spectrum_kernel(X[i],Y[j], k=nplets)
-                elif kernel=="substring":gram_matrix[i,j] = substring_kernel(X[i],Y[j],k=nplets,
-                                                                                 delta=shift)
-                elif kernel=="substring_mis":gram_matrix[i,j] = substring_mismatch_kernel(X[i], 
-                                                                 Y[j], k=nplets, delta=shift)
-                elif kernel=="substring_mis_w":gram_matrix[i,j] = w_substring_mismatch_kernel(
-                                                             X[i], Y[j], k=nplets, delta=shift)
-                elif kernel=="wdk":gram_matrix[i,j] = Weight_Degree_Kernel(X[i],Y[j],degree,i,j)
-                elif kernel=="wdkws":gram_matrix[i,j] = Weight_Degree_Kernel_w_Shifts(X[i],Y[j],
-                                                                         degree, shift)
-                elif kernel=="gappy": gram_matrix[i,j] = gappy_kernel(X[i],Y[j], nplets, gap)
-                elif kernel=="MAK": gram_matrix[i,j] = mean_alignement_kernel(X[i], Y[j], gamma)
-                elif kernel=="LAK": gram_matrix[i,j] = local_align_kernel(X[i],Y[j])
-                elif kernel=="LAK_affine": gram_matrix[i,j] = affine_align(X[i],Y[j])
-                elif kernel=="needleman_wunsch": gram_matrix[i,j] = Needleman_Wunsch(X[i],Y[j])
-                elif kernel=="smith_waterman": gram_matrix[i,j] = Smith_Waterman(X[i],Y[j])
-                elif kernel=="string": gram_matrix[i,j] = string_kernel(gamma,nplets,X[i], Y[j])
-                else: raise NotImplemented
+                for j in range(i, n):
+                    if kernel == "wdk":
+                        gram_matrix[i, j] = Weight_Degree_Kernel(X[i], X[j], degree, i, j)
+                    gram_matrix[i, j] = ker(X[i], X[j])
+                    gram_matrix[j, i] = gram_matrix[i, j]  # + 0.0001
         if normalize: gram_matrix = normalize_gram(gram_matrix)        
         return gram_matrix
