@@ -4,6 +4,8 @@ from kernels_for_sequence import *
 from tqdm import tqdm
 from utils import normalize_gram
 from functools import partial
+import itertools
+
 # Linear kernel    
 def Linear_kernel(x,y):
   return np.dot(x, y.T)
@@ -99,11 +101,19 @@ def RBF_Gram_Matrix(X, Y, kernel="RBF", gamma=0.01, degree=2, shift=2, normalize
     elif kernel == "spectrum":
         ker = partial(spectrum_kernel, k=nplets)
     elif kernel == "substring":
-        ker = partial(substring_kernel, k=nplets, delta=shift)
+        s = X[0][0]
+        combinations = itertools.product(range(len(s) - nplets + 1), range(-shift, shift + 1))
+        ker = partial(substring_kernel, k=nplets, delta=shift, combinations=combinations)
     elif kernel == "substring_mis":
-        ker = substring_mismatch_kernel
+        # s = X[0][0]
+        # combinations = itertools.product(range(len(s) - nplets + 1), range(-shift, shift + 1))
+        # ker = partial(substring_mismatch_kernel, combinations=combinations)
+        ker = partial(substring_mismatch_kernel_fast, n=nplets, k=1, charset='ATCG')
+
     elif kernel == "substring_mis_w":
-        ker = partial(w_substring_mismatch_kernel, k=nplets, delta=shift)
+        s = X[0][0]
+        combinations = itertools.product(range(len(s) - nplets + 1), range(-shift, shift + 1))
+        ker = partial(w_substring_mismatch_kernel, k=nplets, delta=shift, combinations=combinations)
     elif kernel == "wdk":
         ker = Weight_Degree_Kernel
     elif kernel == "wdkws":
@@ -126,10 +136,14 @@ def RBF_Gram_Matrix(X, Y, kernel="RBF", gamma=0.01, degree=2, shift=2, normalize
         raise NotImplemented
 
 
+
     if len(Y)==0:
         n = X.shape[0]
         gram_matrix = np.zeros((n, n), dtype=np.float32)
 
+        if kernel == 'substring_mis':
+            gram_matrix = ker(X, X)
+            return gram_matrix
 
         for i in tqdm(range(n), desc="Computing Gram Matrix"):
             #for j in tqdm(range(i,n), desc="Nested loop"):
@@ -141,17 +155,22 @@ def RBF_Gram_Matrix(X, Y, kernel="RBF", gamma=0.01, degree=2, shift=2, normalize
         if normalize: gram_matrix = normalize_gram(gram_matrix)
         return gram_matrix
     else:
+        n = X.shape[0]
         len_X = X.shape[0]
         len_Y = Y.shape[0]
         gram_matrix = np.zeros((len_X, len_Y), dtype=np.float32)
-        
+
+        if kernel == 'substring_mis':
+            gram_matrix = ker(X, Y)
+            return gram_matrix.T
+
         for i in tqdm(range(len_X), desc="Computing Gram Matrix"):
             #for j in tqdm(range(i,len_Y), desc="Nested loop"):
             for j in range(i,len_Y):
                 for j in range(i, n):
                     if kernel == "wdk":
-                        gram_matrix[i, j] = Weight_Degree_Kernel(X[i], X[j], degree, i, j)
-                    gram_matrix[i, j] = ker(X[i], X[j])
+                        gram_matrix[i, j] = Weight_Degree_Kernel(X[i], Y[j], degree, i, j)
+                    gram_matrix[i, j] = ker(X[i], Y[j])
                     gram_matrix[j, i] = gram_matrix[i, j]  # + 0.0001
         if normalize: gram_matrix = normalize_gram(gram_matrix)        
         return gram_matrix

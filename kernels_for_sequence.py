@@ -2,7 +2,7 @@ import numpy as np
 import itertools
 import math
 from utils import seq_to_num
-
+from tqdm import tqdm
 # slides resume almost all the below kernels
 # http://www.raetschlab.org/lectures/ismb09tutorial/handout.pdf
 # I add specific links for some kernels with additional explanations or python-codes
@@ -42,14 +42,13 @@ def spectrum_kernel(seq1, seq2, k=3):
 # https://mstrazar.github.io/tutorial/python/machine-learning/2018/08/31/string-kernels.html
 #-----------------------------------------------------------------------------------
 # Substring Kernel
-def substring_kernel(s, t, k=3, delta=0):
+def substring_kernel(s, t, k=3, delta=0, combinations=None):
     """ substring length: 𝑘 and shift: delta """
     assert(len(s)==len(t))
     L = len(s)
     return sum(((s[i:i + k] == t[d + i:d + i + k])
-                for i, d in itertools.product(range(L - k + 1), range(-delta, delta + 1))
+                for i, d in combinations
                 if i + d + k <= L and i + d >= 0))
-
 
 
 #-----------------------------------------------------------------------------------
@@ -61,13 +60,96 @@ def miss(s, t):
     """ Count the number of mismatches between two strings."""
     return sum((si != tj for si, tj in zip(s, t)))
 
-def substring_mismatch_kernel(s, t, k=3, delta=1, m=1):
+def substring_mismatch_kernel(s, t, k=3, delta=1, m=1, combinations=None):
     """ String kernel with displacement and mismatches. """
     assert(len(s)==len(t))
     L = len(s)
     return sum(((miss(s[i:i + k], t[d + i:d + i + k]) <= m)
-                for i, d in itertools.product(range(L - k + 1), range(-delta, delta + 1))
+                for i, d in combinations
                 if i + d + k <= L and i + d >= 0))
+#-----------------------------------------------------------------------------------
+#                      Substring Kernel with Mismatches Fast version inspired from:
+# https://github.com/shahineb/kernel_dna_classification
+
+def order_arrays(X1, X2):
+    """Sorts arrays by length
+    Args:
+        X1 (np.ndarray)
+        X2 (np.ndarray)
+    """
+    X = [X1, X2]
+    X.sort(key=len)
+    min_X, min_len = X[0], len(X[0])
+    max_X, max_len = X[1], len(X[1])
+    return min_X, max_X, min_len, max_len
+
+def get_tuple(seq, position, n):
+    try:
+        return seq[position:position + n]
+    except IndexError:
+        raise IndexError("Position out of range for tuple")
+
+def count_pattern_mismatch(pattern, count_dict, neighbors):
+    for neighbor in neighbors[pattern]:
+        count_dict[neighbor] += 1
+    return count_dict
+
+def substitution(word, char, pos):
+    return word[:pos] + char + word[pos + 1:]
+
+def generate_neighbor(word, alphabet, k):
+    """Generates all possible mismatching neighbors with levenshtein
+    distance lower than k
+    """
+    neighbors = []
+    for i, char in enumerate(word):
+        for l in alphabet:
+            neighbors += [substitution(word, l, i)]
+    if k > 1:
+        neighbors += generate_neighbor(word, alphabet, k - 1)
+    return neighbors
+
+
+def substring_mismatch_kernel_fast(X1, X2, n=3, k=1, charset='ATCG'):
+
+    # Generate all possible patterns of size n
+    product_seed = n * ("ATCG",)
+    patterns = itertools.product(*product_seed)
+    join = lambda x: "".join(x)
+    all_patterns = list(map(join, patterns))
+
+    neighbors = {pattern: set(generate_neighbor(pattern, charset, k))
+                       for pattern in all_patterns}
+
+
+    min_X, max_X, min_len, _ = order_arrays(X1, X2)
+    seq_min_len = min(map(len, np.hstack([X1, X2])))
+    seq_max_len = max(map(len, np.hstack([X1, X2])))
+    assert seq_min_len == seq_max_len, "All sequences must have same length"
+    if seq_min_len < n:
+        return 0
+    else:
+        # Initialize counting dictionnaries
+        counts_min = {idx: {perm: 0 for perm in all_patterns} for idx in range(len(min_X))}
+        counts_max = {idx: {perm: 0 for perm in all_patterns} for idx in range(len(max_X))}
+        # Iterate over sequences and count mers occurences
+        for idx, (seq1, seq2) in tqdm(enumerate(zip(min_X, max_X)), disable=True):
+            for i in range(seq_max_len - n):
+                subseq1 = get_tuple(seq1, i, n)
+                counts_min[idx] = count_pattern_mismatch(subseq1, counts_min[idx], neighbors)
+                subseq2 = get_tuple(seq2, i, n)
+                counts_max[idx] = count_pattern_mismatch(subseq2, counts_max[idx], neighbors)
+        # Complete iteration over larger datasets
+        for idx, seq in tqdm(enumerate(max_X[min_len:]), disable=True):
+            for i in range(seq_max_len - n):
+                subseq = get_tuple(seq, i, n)
+                counts_max[idx + min_len] = count_pattern_mismatch(subseq, counts_max[idx + min_len], neighbors)
+        # Compute normalized inner product between spectral features
+        feats1 = np.array([np.fromiter(foo.values(), dtype=np.float32) for foo in counts_max.values()])
+        norms1 = np.linalg.norm(feats1, axis=1).reshape(-1, 1)
+        feats2 = np.array([np.fromiter(foo.values(), dtype=np.float32) for foo in counts_min.values()])
+        norms2 = np.linalg.norm(feats2, axis=1).reshape(-1, 1)
+        return np.inner(feats1 / norms1, feats2 / norms2)
 
 
 #-----------------------------------------------------------------------------------
@@ -75,14 +157,14 @@ def substring_mismatch_kernel(s, t, k=3, delta=1, m=1):
 # https://mstrazar.github.io/tutorial/python/machine-learning/2018/08/31/string-kernels.html
 #-----------------------------------------------------------------------------------
 # Weighted Substring Kernel with Mismatches
-def w_substring_mismatch_kernel(s, t, k=3, delta=1, m=1, gamma=0.99):
+def w_substring_mismatch_kernel(s, t, k=3, delta=1, m=1, gamma=0.99, combinations=None):
     """ String kernel with displacement, mismatches and exponential decay. """
     assert(len(s)==len(t))
     L = len(s)
     return sum(((np.exp(-gamma * d**2) \
                  * np.exp(-gamma * miss(s[i:i + k], t[d + i:d + i + k])) \
                  * (miss(s[i:i + k], t[d + i:d + i + k]) <= m) 
-                for i, d in itertools.product(range(L - k + 1), range(-delta, delta + 1))
+                for i, d in combinations
                 if i + d + k <= L and i + d >= 0)))
 
              
