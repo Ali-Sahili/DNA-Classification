@@ -138,10 +138,11 @@ def substring_mismatch_kernel_fast(X1, X2, n=3, k=1, charset='ATCG'):
 
         counts_min = {}
         counts_max = {}
+        c_maxmin = {perm: 0 for perm in all_patterns}
         # Iterate over sequences and count mers occurences
-        for idx, (seq1, seq2) in tqdm(enumerate(zip(min_X, max_X)), disable=True):
-            c_min = {perm: 0 for perm in all_patterns}
-            c_max = c_min.copy()
+        for idx, (seq1, seq2) in tqdm(enumerate(zip(min_X, max_X)), disable=False):
+            c_min = c_maxmin.copy()
+            c_max = c_maxmin.copy()
             for i in range(seq_max_len - n):
                 subseq1 = get_tuple(seq1, i, n)
                 c_min = count_pattern_mismatch(subseq1, c_min, neighbors)
@@ -152,8 +153,8 @@ def substring_mismatch_kernel_fast(X1, X2, n=3, k=1, charset='ATCG'):
             counts_max[idx] = sparse.csr_matrix(np.fromiter(c_max.values(), dtype=np.float32))
 
         # Complete iteration over larger datasets
-        for idx, seq in tqdm(enumerate(max_X[min_len:]), disable=True):
-            c_max = {perm: 0 for perm in all_patterns}
+        for idx, seq in tqdm(enumerate(max_X[min_len:]), disable=False):
+            c_max = c_maxmin.copy()
             for i in range(seq_max_len - n):
                 subseq = get_tuple(seq, i, n)
                 c_max = count_pattern_mismatch(subseq2, c_max, neighbors)
