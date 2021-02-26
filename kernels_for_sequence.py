@@ -3,6 +3,9 @@ import itertools
 import math
 from utils import seq_to_num
 from tqdm import tqdm
+
+from scipy import sparse
+
 # slides resume almost all the below kernels
 # http://www.raetschlab.org/lectures/ismb09tutorial/handout.pdf
 # I add specific links for some kernels with additional explanations or python-codes
@@ -139,15 +142,22 @@ def substring_mismatch_kernel_fast(X1, X2, n=3, k=1, charset='ATCG'):
                 counts_min[idx] = count_pattern_mismatch(subseq1, counts_min[idx], neighbors)
                 subseq2 = get_tuple(seq2, i, n)
                 counts_max[idx] = count_pattern_mismatch(subseq2, counts_max[idx], neighbors)
+
+            counts_min[idx] = sparse.csr_matrix(np.fromiter(counts_min[idx].values(), dtype=np.float32))
+            counts_max[idx] = sparse.csr_matrix(np.fromiter(counts_max[idx].values(), dtype=np.float32))
+
         # Complete iteration over larger datasets
         for idx, seq in tqdm(enumerate(max_X[min_len:]), disable=True):
             for i in range(seq_max_len - n):
                 subseq = get_tuple(seq, i, n)
                 counts_max[idx + min_len] = count_pattern_mismatch(subseq, counts_max[idx + min_len], neighbors)
+
+            counts_max[idx + min_len] = sparse.csr_matrix(np.fromiter(counts_max[idx + min_len].values(), dtype=np.float32))
+
         # Compute normalized inner product between spectral features
-        feats1 = np.array([np.fromiter(foo.values(), dtype=np.float32) for foo in counts_max.values()])
+        feats1 = np.array([foo.A for foo in counts_max.values()]).squeeze()
         norms1 = np.linalg.norm(feats1, axis=1).reshape(-1, 1)
-        feats2 = np.array([np.fromiter(foo.values(), dtype=np.float32) for foo in counts_min.values()])
+        feats2 = np.array([foo.A for foo in counts_min.values()]).squeeze()
         norms2 = np.linalg.norm(feats2, axis=1).reshape(-1, 1)
         return np.inner(feats1 / norms1, feats2 / norms2)
 

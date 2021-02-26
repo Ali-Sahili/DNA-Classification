@@ -12,7 +12,7 @@ parser.add_argument('--path', type=str, default='data',
                     metavar='D',help="folder where data is located.")
 parser.add_argument('--method', type=str, default='CSVM', metavar='D',
                     help="Choose method: CSVM/SVM/KRR/KLR/KRR_sklearn")
-parser.add_argument('--kernel', type=str, default='linear', metavar='D',
+parser.add_argument('--kernel', type=str, default='substring_mis', metavar='D',
                     help="type of kernel: linear-RBF-polynomial-quadratic or wdk-wdkws-")
 parser.add_argument('--iters', type=int, default=100, metavar='N',
                     help='number of iterations for KLR (default: 100)')                    
