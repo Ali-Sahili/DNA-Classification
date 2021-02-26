@@ -71,8 +71,8 @@ def substring_mismatch_kernel(s, t, k=3, delta=1, m=1, combinations=None):
                 for i, d in combinations
                 if i + d + k <= L and i + d >= 0))
 #-----------------------------------------------------------------------------------
-#                      Substring Kernel with Mismatches Fast version inspired from:
-# https://github.com/shahineb/kernel_dna_classification
+#                      Substring Kernel with Mismatches Fast version (sparse vectors + some small tricks in
+#                      addition to the vectorized version inspired from: https://github.com/shahineb/kernel_dna_classification
 
 def order_arrays(X1, X2):
     """Sorts arrays by length
@@ -131,11 +131,8 @@ def substring_mismatch_kernel_fast(X1, X2, n=3, k=1, charset='ATCG'):
     assert seq_min_len == seq_max_len, "All sequences must have same length"
     if seq_min_len < n:
         return 0
-    else:
+    elif n > 8:
         # Initialize counting dictionnaries
-        # counts_min = {idx: {perm: 0 for perm in all_patterns} for idx in range(len(min_X))}
-        # counts_max = {idx: {perm: 0 for perm in all_patterns} for idx in range(len(max_X))}
-
         counts_min = {}
         counts_max = {}
         c_maxmin = {perm: 0 for perm in all_patterns}
@@ -149,8 +146,8 @@ def substring_mismatch_kernel_fast(X1, X2, n=3, k=1, charset='ATCG'):
                 subseq2 = get_tuple(seq2, i, n)
                 c_max = count_pattern_mismatch(subseq2, c_max, neighbors)
 
-            counts_min[idx] = sparse.csr_matrix(np.fromiter(c_min.values(), dtype=np.float32))
-            counts_max[idx] = sparse.csr_matrix(np.fromiter(c_max.values(), dtype=np.float32))
+            counts_min[idx] = sparse.csr_matrix(np.fromiter(c_min.copy().values(), dtype=np.float32))
+            counts_max[idx] = sparse.csr_matrix(np.fromiter(c_max.copy().values(), dtype=np.float32))
 
         # Complete iteration over larger datasets
         for idx, seq in tqdm(enumerate(max_X[min_len:]), disable=False):
@@ -158,15 +155,36 @@ def substring_mismatch_kernel_fast(X1, X2, n=3, k=1, charset='ATCG'):
             for i in range(seq_max_len - n):
                 subseq = get_tuple(seq, i, n)
                 c_max = count_pattern_mismatch(subseq2, c_max, neighbors)
-
-                # counts_max[idx + min_len] = count_pattern_mismatch(subseq, counts_max[idx + min_len], neighbors)
-
-            counts_max[idx + min_len] = sparse.csr_matrix(np.fromiter(c_max.values(), dtype=np.float32))
+            counts_max[idx + min_len] = sparse.csr_matrix(np.fromiter(c_max.copy().values(), dtype=np.float32))
 
         # Compute normalized inner product between spectral features
         feats1 = np.array([foo.A for foo in counts_max.values()]).squeeze()
         norms1 = np.linalg.norm(feats1, axis=1).reshape(-1, 1)
         feats2 = np.array([foo.A for foo in counts_min.values()]).squeeze()
+        norms2 = np.linalg.norm(feats2, axis=1).reshape(-1, 1)
+        return np.inner(feats1 / norms1, feats2 / norms2)
+
+    else:
+        # Initialize counting dictionnaries
+        counts_min = {idx: {perm: 0 for perm in all_patterns} for idx in tqdm(range(len(min_X)))}
+        counts_max = {idx: {perm: 0 for perm in all_patterns} for idx in tqdm(range(len(max_X)))}
+        # Iterate over sequences and count mers occurences
+        for idx, (seq1, seq2) in tqdm(enumerate(zip(min_X, max_X)), disable=False):
+            for i in range(seq_max_len - n):
+                subseq1 = get_tuple(seq1, i, n)
+                counts_min[idx] = count_pattern_mismatch(subseq1, counts_min[idx], neighbors)
+                subseq2 = get_tuple(seq2, i, n)
+                counts_max[idx] = count_pattern_mismatch(subseq2, counts_max[idx], neighbors)
+        # Complete iteration over larger datasets
+        for idx, seq in tqdm(enumerate(max_X[min_len:]), disable=False):
+            for i in range(seq_max_len - n):
+                subseq = get_tuple(seq, i, n)
+                counts_max[idx + min_len] = count_pattern_mismatch(subseq2, counts_max[idx + min_len], neighbors)
+
+        # Compute normalized inner product between spectral features
+        feats1 = np.array([np.fromiter(foo.values(), dtype=np.float32) for foo in counts_max.values()])
+        norms1 = np.linalg.norm(feats1, axis=1).reshape(-1, 1)
+        feats2 = np.array([np.fromiter(foo.values(), dtype=np.float32) for foo in counts_min.values()])
         norms2 = np.linalg.norm(feats2, axis=1).reshape(-1, 1)
         return np.inner(feats1 / norms1, feats2 / norms2)
 
