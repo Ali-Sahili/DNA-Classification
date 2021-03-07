@@ -189,6 +189,131 @@ def substring_mismatch_kernel_fast(X1, X2, n=3, k=1, charset='ATCG'):
         return np.inner(feats1 / norms1, feats2 / norms2)
 
 
+
+#-----------------------------------------------------------------------------------
+#                      Weighted (according to pos) Substring Kernel with Mismatches Fast version (sparse vectors + some small tricks in
+#                      addition to the vectorized version inspired from: https://github.com/shahineb/kernel_dna_classification
+
+def count_pattern_mismatch_weighted(pattern, count_dict, neighbors, pos_dict, i):
+    for neighbor in neighbors[pattern]:
+        count_dict[neighbor] += 1
+        pos_dict[neighbor] = i
+    return count_dict, pos_dict
+
+
+def substring_mismatch_kernel_wighted_fast(X1, X2, n=3, k=1, charset='ATCG'):
+
+    # Generate all possible patterns of size n
+    product_seed = n * ("ATCG",)
+    patterns = itertools.product(*product_seed)
+    join = lambda x: "".join(x)
+    all_patterns = list(map(join, patterns))
+
+    neighbors = {pattern: set(generate_neighbor(pattern, charset, k))
+                       for pattern in all_patterns}
+
+
+    min_X, max_X, min_len, _ = order_arrays(X1, X2)
+    seq_min_len = min(map(len, np.hstack([X1, X2])))
+    seq_max_len = max(map(len, np.hstack([X1, X2])))
+    assert seq_min_len == seq_max_len, "All sequences must have same length"
+    if seq_min_len < n:
+        return 0
+    elif n > 8:
+        # Initialize counting dictionnaries
+        counts_min = {}
+        counts_max = {}
+        pos_min = {}
+        pos_max = {}
+        c_maxmin = {perm: 0 for perm in all_patterns}
+        # Iterate over sequences and count mers occurences
+        for idx, (seq1, seq2) in tqdm(enumerate(zip(min_X, max_X)), disable=False):
+            c_min = c_maxmin.copy()
+            c_max = c_maxmin.copy()
+            p_min = c_maxmin.copy()
+            p_max = c_maxmin.copy()
+            for i in range(seq_max_len - n):
+                subseq1 = get_tuple(seq1, i, n)
+                c_min, p_min = count_pattern_mismatch_weighted(subseq1, c_min, neighbors, p_min, i)
+                subseq2 = get_tuple(seq2, i, n)
+                c_max, p_max = count_pattern_mismatch_weighted(subseq2, c_max, neighbors, p_max, i)
+
+            counts_min[idx] = sparse.csr_matrix(np.fromiter(c_min.copy().values(), dtype=np.float32))
+            counts_max[idx] = sparse.csr_matrix(np.fromiter(c_max.copy().values(), dtype=np.float32))
+
+            pos_min[idx] = sparse.csr_matrix(np.fromiter(p_min.copy().values(), dtype=np.float32))
+            pos_max[idx] = sparse.csr_matrix(np.fromiter(p_max.copy().values(), dtype=np.float32))
+
+        # Complete iteration over larger datasets
+        for idx, seq in tqdm(enumerate(max_X[min_len:]), disable=False):
+            c_max = c_maxmin.copy()
+            p_max = c_maxmin.copy()
+            for i in range(seq_max_len - n):
+                subseq = get_tuple(seq, i, n)
+                c_max, p_max = count_pattern_mismatch_weighted(subseq, c_max, neighbors, p_max, i)
+
+            counts_max[idx + min_len] = sparse.csr_matrix(np.fromiter(c_max.copy().values(), dtype=np.float32))
+            pos_max[idx] = sparse.csr_matrix(np.fromiter(p_max.copy().values(), dtype=np.float32))
+
+        # Compute normalized inner product between spectral features
+        # pos1 = np.array([foo.A for foo in pos_max.values()]).squeeze()
+        # pos2 = np.array([foo.A for foo in pos_min.values()]).squeeze()
+        # pos = np.exp(np.abs(pos1 - pos2))
+
+        # feats1 = np.array([foo.A*np.exp(np.abs(P.A - p.A)) for foo, P, p in zip(counts_max.values(), pos_max.values(), pos_min.values())]).squeeze()
+        feats1 = np.array([foo.A for foo in counts_max.values()]).squeeze()
+        pos1 = np.array([foo.A for foo in pos_max.values()]).squeeze()
+        pos1_norm = np.linalg.norm(pos1, axis=1).reshape(-1, 1)
+        norms1 = np.linalg.norm(feats1, axis=1).reshape(-1, 1)
+
+        feats2 = np.array([foo.A for foo in counts_min.values()]).squeeze()
+        pos2 = np.array([foo.A for foo in pos_min.values()]).squeeze()
+        pos2_norm = np.linalg.norm(pos2, axis=1).reshape(-1, 1)
+        norms2 = np.linalg.norm(feats2, axis=1).reshape(-1, 1)
+
+        return np.inner(feats1 / norms1, feats2 / norms2) * np.inner(pos1 / pos1_norm, pos2 / pos2_norm)
+
+    else:
+        # Initialize counting dictionnaries
+        counts_min = {idx: {perm: 0 for perm in all_patterns} for idx in range(len(min_X))}
+        counts_max = {idx: {perm: 0 for perm in all_patterns} for idx in range(len(max_X))}
+
+        pos_min = {idx: {perm: 0 for perm in all_patterns} for idx in range(len(min_X))}
+        pos_max = {idx: {perm: 0 for perm in all_patterns} for idx in range(len(max_X))}
+
+        # Iterate over sequences and count mers occurences
+        for idx, (seq1, seq2) in tqdm(enumerate(zip(min_X, max_X)), disable=True):
+            for i in range(seq_max_len - n):
+                subseq1 = get_tuple(seq1, i, n)
+                counts_min[idx], pos_min[idx] = count_pattern_mismatch_weighted(subseq1, counts_min[idx], neighbors, pos_min[idx], i)
+                subseq2 = get_tuple(seq2, i, n)
+                counts_max[idx], pos_max[idx] = count_pattern_mismatch_weighted(subseq2, counts_max[idx], neighbors, pos_max[idx], i)
+        # Complete iteration over larger datasets
+        for idx, seq in tqdm(enumerate(max_X[min_len:]), disable=True):
+            for i in range(seq_max_len - n):
+                subseq = get_tuple(seq, i, n)
+                counts_max[idx + min_len], pos_max[idx + min_len] = count_pattern_mismatch_weighted(subseq, counts_max[idx + min_len], neighbors, pos_max[idx + min_len], i)
+
+        # Compute normalized inner product between spectral features
+        # feats1 = np.array([np.fromiter(foo.values(), dtype=np.float32)* np.exp(-np.abs(np.fromiter(P.values(), dtype=np.float32) - np.fromiter(p.values(), dtype=np.float32)))
+        #                    for foo, P, p in zip(counts_max.values(), pos_max.values(), pos_min.values())]).squeeze()
+
+        feats1 = np.array([np.fromiter(foo.values(), dtype=np.float32) for foo in counts_max.values()])
+        pos1 = np.array([np.fromiter(foo.values(), dtype=np.float32) for foo in pos_max.values()])
+        pos1_norm = np.linalg.norm(pos1, axis=1).reshape(-1, 1)
+        norms1 = np.linalg.norm(feats1, axis=1).reshape(-1, 1)
+
+        feats2 = np.array([np.fromiter(foo.values(), dtype=np.float32) for foo in counts_min.values()])
+        pos2 = np.array([np.fromiter(foo.values(), dtype=np.float32) for foo in pos_min.values()])
+        pos2_norm = np.linalg.norm(pos2, axis=1).reshape(-1, 1)
+        norms2 = np.linalg.norm(feats2, axis=1).reshape(-1, 1)
+
+        K = np.inner(feats1 / norms1, feats2 / norms2)
+        K_pos = np.inner(pos1 / pos1_norm, pos2 / pos2_norm)
+        return K * K_pos
+
+
+
 #-----------------------------------------------------------------------------------
 #                  Weighted Substring Kernel with Mismatches
 # https://mstrazar.github.io/tutorial/python/machine-learning/2018/08/31/string-kernels.html

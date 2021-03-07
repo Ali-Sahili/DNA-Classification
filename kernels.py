@@ -111,9 +111,11 @@ def RBF_Gram_Matrix(X, Y, kernel="RBF", gamma=0.01, degree=2, shift=2, normalize
         ker = partial(substring_mismatch_kernel_fast, n=nplets, k=1, charset='ATCG')
 
     elif kernel == "substring_mis_w":
-        s = X[0][0]
-        combinations = itertools.product(range(len(s) - nplets + 1), range(-shift, shift + 1))
-        ker = partial(w_substring_mismatch_kernel, k=nplets, delta=shift, combinations=combinations)
+        # s = X[0][0]
+        # combinations = itertools.product(range(len(s) - nplets + 1), range(-shift, shift + 1))
+        # ker = partial(w_substring_mismatch_kernel, k=nplets, delta=shift, combinations=combinations)
+        ker = partial(substring_mismatch_kernel_wighted_fast, n=nplets, k=1, charset='ATCG')
+
     elif kernel == "wdk":
         ker = Weight_Degree_Kernel
     elif kernel == "wdkws":
@@ -144,6 +146,9 @@ def RBF_Gram_Matrix(X, Y, kernel="RBF", gamma=0.01, degree=2, shift=2, normalize
         if kernel == 'substring_mis':
             gram_matrix = ker(X, X)
             return gram_matrix
+        elif kernel == 'substring_mis_w':
+            gram_matrix = ker(X, X)
+            return gram_matrix
 
         for i in tqdm(range(n), desc="Computing Gram Matrix"):
             #for j in tqdm(range(i,n), desc="Nested loop"):
@@ -161,6 +166,9 @@ def RBF_Gram_Matrix(X, Y, kernel="RBF", gamma=0.01, degree=2, shift=2, normalize
         gram_matrix = np.zeros((len_X, len_Y), dtype=np.float32)
 
         if kernel == 'substring_mis':
+            gram_matrix = ker(X, Y)
+            return gram_matrix.T
+        elif kernel == 'substring_mis_w':
             gram_matrix = ker(X, Y)
             return gram_matrix.T
 
