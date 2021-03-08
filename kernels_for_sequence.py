@@ -197,7 +197,7 @@ def substring_mismatch_kernel_fast(X1, X2, n=3, k=1, charset='ATCG'):
 def count_pattern_mismatch_weighted(pattern, count_dict, neighbors, pos_dict, i):
     for neighbor in neighbors[pattern]:
         count_dict[neighbor] += 1
-        pos_dict[neighbor] = i
+        pos_dict[neighbor] = +i
     return count_dict, pos_dict
 
 
@@ -253,7 +253,7 @@ def substring_mismatch_kernel_wighted_fast(X1, X2, n=3, k=1, charset='ATCG'):
                 c_max, p_max = count_pattern_mismatch_weighted(subseq, c_max, neighbors, p_max, i)
 
             counts_max[idx + min_len] = sparse.csr_matrix(np.fromiter(c_max.copy().values(), dtype=np.float32))
-            pos_max[idx] = sparse.csr_matrix(np.fromiter(p_max.copy().values(), dtype=np.float32))
+            pos_max[idx + min_len] = sparse.csr_matrix(np.fromiter(p_max.copy().values(), dtype=np.float32))
 
         # Compute normalized inner product between spectral features
         # pos1 = np.array([foo.A for foo in pos_max.values()]).squeeze()
