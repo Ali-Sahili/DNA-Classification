@@ -132,6 +132,8 @@ elif args.kernel == "substring":
     print("*******  substring k=" + str(args.nplets) + ", delta=" + str(args.shift) + " *******")
 elif args.kernel == "substring_mis":
     print("*****  substring_mis k=" + str(args.nplets) + ", delta=" + str(args.shift) + " *****")
+elif args.kernel == "substring_mis_mixed":
+    print("*****  substring_mis_mixed k=" + str(args.nplets) + ", delta=" + str(args.shift) + " *****")
 elif args.kernel == "substring_mis_w":
     print("****  substring_mis_w k=" + str(args.nplets) + ", delta=" + str(args.shift) + " ****")
 elif args.kernel == "wdk":
@@ -154,7 +156,6 @@ elif args.kernel == "string":
     print("****   string kernel: k=" + str(args.nplets) + ", lamda=" + str(args.gamma) + " ****")
 else:
     raise NotImplemented
- 
 #---------------------------------------------------------------------------
 #                    Training and Prediction phase 
 #---------------------------------------------------------------------------
