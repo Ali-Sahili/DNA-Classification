@@ -108,7 +108,7 @@ def RBF_Gram_Matrix(X, Y, kernel="RBF", gamma=0.01, degree=2, shift=2, normalize
         # s = X[0][0]
         # combinations = itertools.product(range(len(s) - nplets + 1), range(-shift, shift + 1))
         # ker = partial(substring_mismatch_kernel, combinations=combinations)
-        ker = partial(substring_mismatch_kernel_fast, n=nplets, k=1, charset='ATCG')
+        ker = partial(substring_mismatch_kernel_fast, n=nplets, k=1, charset='ATCG', norm=normalize)
 
     elif kernel == "substring_mis_w":
         # s = X[0][0]
