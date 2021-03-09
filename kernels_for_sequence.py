@@ -158,11 +158,25 @@ def substring_mismatch_kernel_fast(X1, X2, n=3, k=1, charset='ATCG'):
             counts_max[idx + min_len] = sparse.csr_matrix(np.fromiter(c_max.copy().values(), dtype=np.float32))
 
         # Compute normalized inner product between spectral features
-        feats1 = np.array([foo.A for foo in counts_max.values()]).squeeze()
-        norms1 = np.linalg.norm(feats1, axis=1).reshape(-1, 1)
-        feats2 = np.array([foo.A for foo in counts_min.values()]).squeeze()
-        norms2 = np.linalg.norm(feats2, axis=1).reshape(-1, 1)
-        return np.inner(feats1 / norms1, feats2 / norms2)
+        if n < 10 or seq_max_len != seq_min_len:
+            feats1 = np.array([foo.A for foo in counts_max.values()]).squeeze()
+            norms1 = np.linalg.norm(feats1, axis=1).reshape(-1, 1)
+            feats2 = np.array([foo.A for foo in counts_min.values()]).squeeze()
+            norms2 = np.linalg.norm(feats2, axis=1).reshape(-1, 1)
+            return np.inner(feats1 / norms1, feats2 / norms2)
+        else:
+            n1 = seq_max_len
+            n2 = seq_min_len
+            G = np.zeros((n1, n2), dtype=np.float32)
+            for i, f1 in enumerate(counts_max.values()):
+                for j, f2 in enumerate(counts_min.values()):
+                    f1_np = f1.A
+                    f2_np = f2.A
+                    norm1 = np.linalg.norm(f1_np)
+                    norm2 = np.linalg.norm(f2_np)
+                    G[i, j] = np.dot(f1_np.T / norm1, f2_np.A / norm2)
+
+            return G
 
     else:
         # Initialize counting dictionnaries
