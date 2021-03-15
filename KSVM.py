@@ -230,7 +230,7 @@ class NLCK_C_SVM:
         self.nplets = nplets
         self.shift = shift
         self.degree = 2
-        self.n_iter = 2
+        self.n_iter = 20
         self.u0 = 0
         self.fnorm = 10
         self.eta = 1
@@ -243,11 +243,11 @@ class NLCK_C_SVM:
         return -(2 * self.y - 2 * np.dot(self.K, alpha))
 
     def grad(self, u, alpha):
-        K_s = np.sum(self.K_list * u[:, None, None], axis=0) ** (self.degree - 1)
+        K_s = np.sum(self.K_list * u[:, None, None], axis=0)
         grad = np.zeros(self.p)
         for m in range(self.p):
             grad[m] = alpha.T.dot((K_s * self.K_list[m])).dot(alpha)
-        return - self.degree * grad
+        return - 2 * grad
 
     def normalizing(self, u, u0, fnorm):
         u_s = (u - u0)
@@ -257,7 +257,7 @@ class NLCK_C_SVM:
 
     def fit_svm(self, u):
 
-        self.K = np.sum((self.K_list * u[:, None, None]), axis=0) ** self.degree
+        self.K = np.sum((self.K_list * u[:, None, None]), axis=0)
         n = self.K.shape[0]
 
         if self.solver == 'BFGS':
@@ -329,7 +329,7 @@ class NLCK_C_SVM:
         for i in range(1, len(K_list)):
             K_np = np.concatenate((K_np, K_list[i][None, :, :]), axis=0)
 
-        K = np.sum((K_np * self.u[:, None, None]), axis=0) ** self.degree
+        K = np.sum((K_np * self.u[:, None, None]), axis=0)
         return np.sign(np.dot(K, self.alpha))
 
     def score(self, pred, labels):
