@@ -116,7 +116,7 @@ def RBF_Gram_Matrix(X, Y, kernel="RBF", gamma=0.01, degree=2, shift=2, normalize
         # ker = partial(w_substring_mismatch_kernel, k=nplets, delta=shift, combinations=combinations)
         ker = partial(substring_mismatch_kernel_wighted_fast, n=nplets, k=1, charset='ATCG')
 
-    elif kernel == "substring_mis_mixed":
+    elif kernel == "substring_mis_mixed" or kernel == 'nlck_mismatch':
         ker1 = partial(substring_mismatch_kernel_wighted_fast, n=nplets+1, k=1, charset='ATCG')
         ker2 = partial(substring_mismatch_kernel_wighted_fast, n=nplets, k=1, charset='ATCG')
         ker3 = partial(substring_mismatch_kernel_wighted_fast, n=nplets-1, k=1, charset='ATCG')
@@ -157,6 +157,9 @@ def RBF_Gram_Matrix(X, Y, kernel="RBF", gamma=0.01, degree=2, shift=2, normalize
         elif kernel == 'substring_mis_mixed':
             gram_matrix = 0.2*ker1(X, X) + 0.6*ker2(X, X) + 0.2*ker3(X, X)
             return gram_matrix
+        elif kernel == 'nlck_mismatch':
+            gram_matrices = [ker1(X, X), ker2(X, X), ker3(X, X)]
+            return  gram_matrices
 
         for i in tqdm(range(n), desc="Computing Gram Matrix"):
             #for j in tqdm(range(i,n), desc="Nested loop"):
@@ -182,6 +185,9 @@ def RBF_Gram_Matrix(X, Y, kernel="RBF", gamma=0.01, degree=2, shift=2, normalize
         elif kernel == 'substring_mis_mixed':
             gram_matrix = 0.2*ker1(X, Y) + 0.6*ker2(X, Y) + 0.2*ker3(X, Y)
             return gram_matrix.T
+        elif kernel == 'nlck_mismatch':
+            gram_matrices = [ker1(X, Y).T, ker2(X, Y).T, ker3(X, Y).T]
+            return  gram_matrices
 
         for i in tqdm(range(len_X), desc="Computing Gram Matrix"):
             #for j in tqdm(range(i,len_Y), desc="Nested loop"):

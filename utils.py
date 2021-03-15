@@ -97,6 +97,7 @@ def fit_and_predict(algo, X, y, X_test, return_score=False, ratio=0.2, verbose=F
     X_train, y_train = X[idx_train], y[idx_train]
     X_val, y_val = X[idx_val], y[idx_val]
 
+
     algo.fit(X_train, y_train)
     #print(algo.alpha)
     
@@ -115,6 +116,8 @@ def fit_and_predict(algo, X, y, X_test, return_score=False, ratio=0.2, verbose=F
     
     if return_score: return pred_test, sc_val
     return pred_test
+
+
 
 
 # Normalizing the Gram matrix

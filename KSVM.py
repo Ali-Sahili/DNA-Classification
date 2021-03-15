@@ -128,14 +128,16 @@ class C_SVM:
     def jac(self, alpha):
         return -(2 * self.y - 2*np.dot(self.K, alpha))
 
-    def fit(self, X, y):
+    def fit(self, X, y, suffix='test'):
         
         self.X = X
         self.y = y
 
+
         # Gram Matrix
-        self.K = RBF_Gram_Matrix(X, [], self.kernel, self.gamma, self.degree, self.shift, 
-                                        self.normalize, self.gap, self.nplets)
+        self.K = RBF_Gram_Matrix(X, [], self.kernel, self.gamma, self.degree, self.shift,
+                                 self.normalize, self.gap, self.nplets)
+
         n = self.K.shape[0]
         
         if self.solver == 'BFGS':
@@ -160,10 +162,12 @@ class C_SVM:
             sol = cvxopt.solvers.qp(P, q, G, h)
             self.alpha = np.ravel(sol['x'])
 
+        return self.K
+
     def predict(self, x_test):
-        K = RBF_Gram_Matrix(x_test, self.X, self.kernel, self.gamma, self.degree, self.shift, 
+        K = RBF_Gram_Matrix(x_test, self.X, self.kernel, self.gamma, self.degree, self.shift,
                                             self.normalize, self.gap, self.nplets)
-        return np.sign(np.dot(K, self.alpha))
+        return np.sign(np.dot(K, self.alpha)), self.K
 
     def score(self, pred, labels):
         return np.mean(pred==labels)
@@ -207,3 +211,126 @@ class Two_SVM:
 
     def score(self, pred, labels):
         return np.mean(pred==labels)
+
+
+class NLCK_C_SVM:
+    '''
+    Inspired from: https://github.com/afiliot/Kernel-Methods-For-Genomics/blob/master/NLCKernels.py
+    '''
+    def __init__(self, kernel="rbf", C=10, solver='BFGS', gamma=0.01, degree=3, normalize=False,
+                 shift=2, nplets=3, gap=2):
+
+        self.C = C
+        self.gamma = gamma
+        self.solver = solver
+        self.degree = degree
+        self.kernel = kernel
+        self.normalize = normalize
+        self.gap = gap
+        self.nplets = nplets
+        self.shift = shift
+        self.degree = 2
+        self.n_iter = 2
+        self.u0 = 0
+        self.fnorm = 10
+        self.eta = 1
+        self.eps = 1e-7
+
+    def loss(self, alpha):
+        return -(2 * np.dot(alpha, self.y) - np.dot(alpha.T, np.dot(self.K, alpha)))
+
+    def jac(self, alpha):
+        return -(2 * self.y - 2 * np.dot(self.K, alpha))
+
+    def grad(self, u, alpha):
+        K_s = np.sum(self.K_list * u[:, None, None], axis=0) ** (self.degree - 1)
+        grad = np.zeros(self.p)
+        for m in range(self.p):
+            grad[m] = alpha.T.dot((K_s * self.K_list[m])).dot(alpha)
+        return - self.degree * grad
+
+    def normalizing(self, u, u0, fnorm):
+        u_s = (u - u0)
+        u_s_norm = u_s / np.sqrt(np.sum(u_s ** 2))
+        u_s = u_s_norm * fnorm
+        return u_s + u0
+
+    def fit_svm(self, u):
+
+        self.K = np.sum((self.K_list * u[:, None, None]), axis=0) ** self.degree
+        n = self.K.shape[0]
+
+        if self.solver == 'BFGS':
+            # initialization
+            alpha0 = np.random.randn(n)
+            # Gradient descent
+            # 0 <= alpha*y <= C
+            bounds_down = [-self.C if self.y[i] <= 0 else 0 for i in range(n)]
+            bounds_up = [+self.C if self.y[i] >= 0 else 0 for i in range(n)]
+            bounds = [[bounds_down[i], bounds_up[i]] for i in range(n)]
+            res = optimize.fmin_l_bfgs_b(self.loss, alpha0, fprime=self.jac, bounds=bounds)
+            self.alpha = res[0]
+
+        elif self.solver == 'CVX':
+            cvxopt.solvers.options['show_progress'] = False
+            r, o, z = np.arange(n), np.ones(n), np.zeros(n)
+            P = cvxopt.matrix(self.K.astype(float), tc='d')
+            q = cvxopt.matrix(-self.y, tc='d')
+            G = cvxopt.spmatrix(np.r_[self.y, -self.y], np.r_[r, r + n], np.r_[r, r], tc='d')
+            h = cvxopt.matrix(np.r_[o * self.C, z], tc='d')
+            cvxopt.solvers.options['show_progress'] = False
+            sol = cvxopt.solvers.qp(P, q, G, h)
+            self.alpha = np.ravel(sol['x'])
+
+        return self.alpha
+
+    def fit(self, X, y, suffix='test'):
+
+        self.X = X
+        self.y = y
+
+        # Gram Matrix
+        K_list = RBF_Gram_Matrix(X, [], self.kernel, self.gamma, self.degree, self.shift,
+                                 self.normalize, self.gap, self.nplets)
+        self.p = len(K_list)
+
+        self.K_list = K_list[0][None, :, :]
+
+        for i in range(1, len(K_list)):
+            self.K_list = np.concatenate((self.K_list, K_list[i][None, :, :]), axis=0)
+
+
+
+        u = np.ones(self.p)
+        u = self.normalizing(u, self.u0, self.fnorm)
+        u = np.array([0 if u[i] < 0 else u[i] for i in range(self.p)])
+
+        score_prev = np.inf
+        for k in range(self.n_iter):
+            print('Iteration {}, u={}, score={:0.5f}'.format(k, u, score_prev))
+            alpha = self.fit_svm(u)
+            g = self.grad(u, alpha)
+            u_next = self.normalizing(u - self.eta * g, self.u0, self.fnorm)
+            u_next = np.array([0 if u_next[i] < 0 else u_next[i] for i in range(self.p)])
+            score = np.linalg.norm(u_next - u, np.inf)
+            if score > score_prev:
+                self.eta *= 0.8
+            if score < self.eps:
+                return u_next
+            u = u_next
+            score_prev = score.copy()
+        self.alpha = alpha
+        self.u = u
+
+    def predict(self, x_test):
+        K_list = RBF_Gram_Matrix(x_test, self.X, self.kernel, self.gamma, self.degree, self.shift,
+                            self.normalize, self.gap, self.nplets)
+        K_np = K_list[0][None, :, :]
+        for i in range(1, len(K_list)):
+            K_np = np.concatenate((K_np, K_list[i][None, :, :]), axis=0)
+
+        K = np.sum((K_np * self.u[:, None, None]), axis=0) ** self.degree
+        return np.sign(np.dot(K, self.alpha))
+
+    def score(self, pred, labels):
+        return np.mean(pred == labels)

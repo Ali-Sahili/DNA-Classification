@@ -108,7 +108,12 @@ elif args.method == "KLR":
     from KR import KLR
     algo = KLR( kernel=args.kernel, lam=args.lam, eps=args.eps, 
                gamma=args.gamma, nb_iters=args.iters, degree = args.degree)
-
+elif args.method == 'NLCK_CSVM':
+    print('**************  CSVM  *****************')
+    from KSVM import NLCK_C_SVM
+    algo = NLCK_C_SVM(kernel=args.kernel, C=args.C, solver=args.solver,
+                 gamma=args.gamma, degree=args.degree, normalize=args.normalize,
+                 gap=args.gap, shift=args.shift, nplets=args.nplets)
 else:
     raise NotImplemented
 
@@ -134,6 +139,8 @@ elif args.kernel == "substring_mis":
     print("*****  substring_mis k=" + str(args.nplets) + ", delta=" + str(args.shift) + " *****")
 elif args.kernel == "substring_mis_mixed":
     print("*****  substring_mis_mixed k=" + str(args.nplets) + ", delta=" + str(args.shift) + " *****")
+elif args.kernel == "nlck_mismatch":
+    print("*****  nlck_mismatch k=" + str(args.nplets) + ", delta=" + str(args.shift) + " *****")
 elif args.kernel == "substring_mis_w":
     print("****  substring_mis_w k=" + str(args.nplets) + ", delta=" + str(args.shift) + " ****")
 elif args.kernel == "wdk":
