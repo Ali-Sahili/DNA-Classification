@@ -81,7 +81,7 @@ def train_model(  model, train_loader, val_loader, criterion, optimizer, lr_sche
             print('{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss, epoch_acc))
 
             # deep copy the model
-            if (phase == 'val') and epoch_loss < best_loss:
+            if (phase == 'val') and epoch_acc > best_acc:
                 best_acc = epoch_acc
                 best_loss = epoch_loss
                 best_weights = copy.deepcopy(model.state_dict())
