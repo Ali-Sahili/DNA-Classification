@@ -162,12 +162,11 @@ class C_SVM:
             sol = cvxopt.solvers.qp(P, q, G, h)
             self.alpha = np.ravel(sol['x'])
 
-        return self.K
 
     def predict(self, x_test):
         K = RBF_Gram_Matrix(x_test, self.X, self.kernel, self.gamma, self.degree, self.shift,
                                             self.normalize, self.gap, self.nplets)
-        return np.sign(np.dot(K, self.alpha)), self.K
+        return np.sign(np.dot(K, self.alpha))
 
     def score(self, pred, labels):
         return np.mean(pred==labels)
@@ -232,7 +231,7 @@ class NLCK_C_SVM:
         self.degree = 2
         self.n_iter = 20
         self.u0 = 0
-        self.fnorm = 10
+        self.fnorm = 1
         self.eta = 1
         self.eps = 1e-7
 
@@ -316,7 +315,7 @@ class NLCK_C_SVM:
             if score > score_prev:
                 self.eta *= 0.8
             if score < self.eps:
-                return u_next
+                break
             u = u_next
             score_prev = score.copy()
         self.alpha = alpha

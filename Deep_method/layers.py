@@ -25,6 +25,7 @@ kernels = {
 #-----------------------------------------------------------------------------------------
 
 class CKNLayer(nn.Conv1d):
+    """https://gitlab.inria.fr/dchen/CKN-seq"""
     def __init__(self, in_channels, out_channels, filter_size,
                  padding=0, dilation=1, groups=1, subsampling=1,
                  kernel_func="exp", kernel_args=[0.5]):
@@ -200,6 +201,7 @@ class CKNLayer(nn.Conv1d):
 
 
 class BioEmbedding(nn.Module):
+    """https://gitlab.inria.fr/dchen/CKN-seq"""
     def __init__(self, num_embeddings, mask_zeros=False):
         """Embedding layer for biosequences
         Args:
@@ -238,6 +240,7 @@ class BioEmbedding(nn.Module):
 
 
 class GlobalAvg1D(nn.Module):
+    """https://gitlab.inria.fr/dchen/CKN-seq"""
     def __init__(self):
         super(GlobalAvg1D, self).__init__()
 
@@ -249,6 +252,7 @@ class GlobalAvg1D(nn.Module):
         return x.sum(dim=-1)/mask.sum(dim=-1)
 
 class RowPreprocessor(nn.Module):
+    """https://gitlab.inria.fr/dchen/CKN-seq"""
     def __init__(self):
         super(RowPreprocessor, self).__init__()
         self.register_buffer("mean", None)
@@ -315,6 +319,7 @@ class RowPreprocessor(nn.Module):
 
 
 class LinearMax(nn.Linear, LinearModel, LinearClassifierMixin):
+    """https://gitlab.inria.fr/dchen/CKN-seq"""
     def __init__(self, in_features, out_features, alpha=0.0, penalty="l2"):
         super(LinearMax, self).__init__(in_features, out_features)
         self.alpha = alpha

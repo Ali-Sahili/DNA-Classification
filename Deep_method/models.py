@@ -8,6 +8,7 @@ from layers import BioEmbedding, CKNLayer, RowPreprocessor, GlobalAvg1D, LinearM
 
 
 class CKNSequential(nn.Module):
+    """https://gitlab.inria.fr/dchen/CKN-seq"""
     def __init__(self, in_channels, out_channels_list, filter_sizes,
                  subsamplings, kernel_func="exp", kernel_args=0.3):
         assert len(out_channels_list) == len(filter_sizes) == len(subsamplings), "incompatible dimensions"
@@ -62,6 +63,7 @@ class CKNSequential(nn.Module):
             module.normalize_()
 
 class CKN(nn.Module):
+    """https://gitlab.inria.fr/dchen/CKN-seq"""
     def __init__(self, in_channels, out_channels_list, filter_sizes,
                  subsamplings, kernel_func="exp", kernel_args=0.3,
                  alpha=0., penalty='l2'):

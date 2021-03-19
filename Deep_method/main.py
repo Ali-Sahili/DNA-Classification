@@ -9,6 +9,7 @@ from models import CKN
 from train import train_model
 from prepare_data import load_data
 
+from utils import save_results
 #---------------------------------------------------------------------------
 #                               Parameters Settings
 #---------------------------------------------------------------------------
@@ -16,7 +17,8 @@ from prepare_data import load_data
 parser = argparse.ArgumentParser(description='Data Callenge training script')
 parser.add_argument('--path', type=str, default='../data/', 
                     metavar='D',help="folder where data is located.")
-                    
+parser.add_argument('--out-path', type=str, default='',
+                    metavar='D',help="folder where csv is saved.")
 parser.add_argument('--kernel_func', type=str, default='exp', metavar='D',
                     help="Choose kernel: exp or add_exp") 
 parser.add_argument('--kernel_args', type=float, default=0.3, metavar='param',
@@ -43,7 +45,9 @@ parser.add_argument('--stride', nargs="*", type=int, default=[1], metavar='strid
                     help='size of stride operation (default: [1])')
 parser.add_argument('--use_cuda', type=bool, default=False, metavar='use_cuda',
                     help='use cuda (default: False)')
-                    
+
+parser.add_argument('--dataset', type=int, default=0,
+                    help='0 1 2')
 args = parser.parse_args()
 
 
@@ -52,8 +56,9 @@ args = parser.parse_args()
 #                                Loading Data
 #---------------------------------------------------------------------------
 #
-train_loader, val_loader = load_data(args.path+"Xtr0.csv", args.path+"Ytr0.csv", phase="train")
-test_loader = load_data(args.path+"Xtr0.csv", args.path+"Ytr0.csv", phase="test")
+data_num = args.dataset
+train_loader, val_loader = load_data(args.path+"Xtr"+str(data_num)+".csv", args.path+"Ytr"+str(data_num)+".csv", phase="train")
+test_loader = load_data(args.path+"Xtr"+str(data_num)+".csv", args.path+"Ytr"+str(data_num)+".csv", phase="test")
 
 
 #---------------------------------------------------------------------------
@@ -83,3 +88,7 @@ model = train_model( model, train_loader, val_loader, criterion, optimizer, lr_s
 #---------------------------------------------------------------------------
 #
 y_pred, y_true = model.predict(test_loader, proba=True, use_cuda=args.use_cuda)
+
+print("Saving ...")
+
+save_results(y_true, args.out_path, filename="results_CKN_"+ str(data_num))

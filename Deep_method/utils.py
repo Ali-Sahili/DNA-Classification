@@ -5,6 +5,16 @@ import torch
 from torch.autograd import Variable
 
 
+def save_results(pred, out_path="", filename="results"):
+    import pandas as pd
+    pred = pred.numpy()
+    data_id = np.arange(pred.shape[0])
+    data_val = pred
+    data_val = np.where(data_val == -1, 0, 1)
+
+    df = pd.DataFrame({"Id": data_id, "Bound": data_val})
+    df.to_csv(out_path + filename + ".csv", index=False)
+
 class MatrixInverseSqrt(torch.autograd.Function):
     """Matrix inverse square root for a symmetric definite positive matrix
     """
