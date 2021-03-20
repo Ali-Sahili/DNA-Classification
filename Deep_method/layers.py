@@ -321,12 +321,25 @@ class RowPreprocessor(nn.Module):
 class LinearMax(nn.Linear, LinearModel, LinearClassifierMixin):
     """https://gitlab.inria.fr/dchen/CKN-seq"""
     def __init__(self, in_features, out_features, alpha=0.0, penalty="l2"):
-        super(LinearMax, self).__init__(in_features, out_features)
+        super(LinearMax, self).__init__(in_features, 128)
         self.alpha = alpha
         self.penalty = penalty
+        self.extra_layer = nn.Linear(128, 64)
+        self.extra_layer2 = nn.Linear(64, 32)
+        self.extra_layer3 = nn.Linear(32, 1)
+        self.activation = nn.ReLU()
+        self.dropout = nn.Dropout(0.2)
 
     def forward(self, input, proba=False):
         out = super(LinearMax, self).forward(input)
+        out = self.dropout(out)
+        out = self.activation(out)
+        out = self.extra_layer(out)
+        out = self.dropout(out)
+        out = self.activation(out)
+        out = self.extra_layer2(out)
+        out = self.activation(out)
+        out = self.extra_layer3(out)
         if proba:
             return out.sigmoid()
         return out
