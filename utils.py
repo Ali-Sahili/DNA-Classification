@@ -84,7 +84,7 @@ def cross_validation(algo, X, y, kfolds=5):
         print("Fold "+str(i+1)+" - score on validation set: ", score(pred_val, y_val))
 
 # train algorithm on the training set and predict labels of the testing set
-def fit_and_predict(algo, X, y, X_test, return_score=False, ratio=0.2, verbose=False):
+def fit_and_predict(algo, X, y, X_test, return_score=False, ratio=0.2, verbose=False, suffix='test', save=False):
     # ratio: default 20% validation set and 80 % training set
     n = X.shape[0]
     p = int(ratio*n) # 20% for validation
@@ -97,8 +97,10 @@ def fit_and_predict(algo, X, y, X_test, return_score=False, ratio=0.2, verbose=F
     X_train, y_train = X[idx_train], y[idx_train]
     X_val, y_val = X[idx_val], y[idx_val]
 
-
-    algo.fit(X_train, y_train)
+    try:
+        algo.fit(X_train, y_train, suffix=suffix, save=save)
+    except:
+        algo.fit(X_train, y_train)
     #print(algo.alpha)
     
     # Compute score on training set

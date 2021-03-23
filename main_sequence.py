@@ -46,6 +46,12 @@ parser.add_argument('--gap', type=int, default=2, metavar='N',
                     help='gap value for gappy kernel (default: 2)')
 parser.add_argument('--save', type=bool, default=True, metavar='N',
                     help='Save results (default: True)')
+parser.add_argument('--save-name', type=str, default='mismatch',
+                    help='Save kernel (default: True)')
+parser.add_argument('--save-kernel', type=bool, default=False, metavar='N',
+                    help='Save kernel matrix (default: True)')
+parser.add_argument('--val-ratio', type=float, default=0.2, metavar='N',
+                    help='validation ratio')
 args = parser.parse_args()
 
 
@@ -171,9 +177,9 @@ if args.trw:
     pred_test = fit_and_predict( algo=algo, X=X_seq, y=Y, X_test=X_seq_test, verbose=True)
 else:
     # Train and predict for each dataset apart
-    pred_test_0 = fit_and_predict(algo=algo, X=X_seq_0, y=Y_0, X_test=X_seq_test_0, verbose=True)
-    pred_test_1 = fit_and_predict(algo=algo, X=X_seq_1, y=Y_1, X_test=X_seq_test_1, verbose=True)
-    pred_test_2 = fit_and_predict(algo=algo, X=X_seq_2, y=Y_2, X_test=X_seq_test_2, verbose=True)
+    pred_test_0 = fit_and_predict(algo=algo, X=X_seq_0, y=Y_0, X_test=X_seq_test_0, verbose=True, suffix=args.save_name+ str(0), save=args.save_kernel, ratio=args.val_ratio)
+    pred_test_1 = fit_and_predict(algo=algo, X=X_seq_1, y=Y_1, X_test=X_seq_test_1, verbose=True, suffix=args.save_name+ str(1), save=args.save_kernel, ratio=args.val_ratio)
+    pred_test_2 = fit_and_predict(algo=algo, X=X_seq_2, y=Y_2, X_test=X_seq_test_2, verbose=True, suffix=args.save_name+ str(2), save=args.save_kernel, ratio=args.val_ratio)
 
 #---------------------------------------------------------------------------
 #                               Save Results

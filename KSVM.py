@@ -128,7 +128,7 @@ class C_SVM:
     def jac(self, alpha):
         return -(2 * self.y - 2*np.dot(self.K, alpha))
 
-    def fit(self, X, y, suffix='test'):
+    def fit(self, X, y, suffix='test', save=False):
         
         self.X = X
         self.y = y
@@ -137,6 +137,9 @@ class C_SVM:
         # Gram Matrix
         self.K = RBF_Gram_Matrix(X, [], self.kernel, self.gamma, self.degree, self.shift,
                                  self.normalize, self.gap, self.nplets)
+        if save:
+            np.save(suffix, self.K)
+            print("saving kernel: ", suffix)
 
         n = self.K.shape[0]
         
