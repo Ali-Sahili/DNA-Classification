@@ -32,7 +32,7 @@ For Deep learning method, you need to install some additional libraries:
 ### Testing
 To test results using numeric data, choose the corresponding parameters for each method and kernel and put into your terminal:
 `
-python main_numeric.py --path data/ --out-path results/
+python main_numeric.py --path data/ --out-path results/ <\br>
                        --method CSVM --C 5. --iters 100
                        --solver CVX --PCA False
                        --kernel rbf --gamma 0.01
