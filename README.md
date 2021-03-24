@@ -40,7 +40,7 @@ The experiments were performed using Python 3.8.5 with the following Python pack
 * [scipy](https://www.scipy.org/) == 1.3.3
 
 For Deep learning method, you need to install some additional libraries:
-* [torch](https://pytorch.org/) == 0.4.0
+* [torch](https://pytorch.org/) == 1.5.1
 * [sklearn](https://scikit-learn.org/stable/) == 0.22.2
 
 ### Testing
