@@ -62,3 +62,13 @@ python main_sequence.py --path data/ --out-path results/
                         
                         --save True
 ```
+In addition, to work with deep learning method, choose your parameter and put into your terminal:
+```
+python Deep_method/main.py --path ../data/ --kernel_func exp --kernel_args 0.2
+                           --alpha 1e-4 --penalty l1 --noise 0.01
+                           --lr 0.01 --epochs 500
+                           --n_motifs 128 256 128
+                           --len_motifs 8 6 6
+                           --stride 1 1 1
+                           --use_cuda False
+```
