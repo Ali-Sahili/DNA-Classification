@@ -106,6 +106,6 @@ python start.py
 [Biological sequence modeling with convolutional kernel networks](https://hal.inria.fr/hal-01632912v3/document)
 
 ### Acknowledgments
-- [StringKernelSVM by Tim_Shenkao](https://github.com/timshenkao/StringKernelSVM/blob/master/stringSVM.py)
-- [Kernel DNA Classification by Shahine](https://github.com/shahineb/kernel_dna_classification)
-- [CKN model implementation by CHEN Dexiong](https://gitlab.inria.fr/dchen/CKN-seq)
+- StringKernelSVM by [Tim_Shenkao](https://github.com/timshenkao/StringKernelSVM/blob/master/stringSVM.py)
+- Kernel DNA Classification by [Shahine](https://github.com/shahineb/kernel_dna_classification)
+- CKN model implementation by [CHEN Dexiong](https://gitlab.inria.fr/dchen/CKN-seq)
