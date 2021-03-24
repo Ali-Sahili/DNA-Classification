@@ -24,6 +24,7 @@ The experiments were performed using Python 3.8.5 with the following Python pack
 * [tqdm](https://tqdm.github.io/) == 4.30.0
 * cvxopt
 * scipy
+
 For Deep learning method, you need to install some additional libraries:
 * [torch](https://pytorch.org/) == 0.4.0
 * sklearn
