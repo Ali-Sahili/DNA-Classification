@@ -1,5 +1,19 @@
 # DataChallenge---DNA-Classification
 
+<p float="center">
+  <img src="Image/DNA_image.jpg" width="900">
+</p>
+
+### Table of Content
+
+- [Introduction](#Introduction)
+- [Classifiers](#Classifiers)
+- [Kernels on Numeric Data](#Kernels on Numeric Data)
+- [Kernels on sequences](#Kernels on sequences)
+- [Deep learning](#Deep learning)
+- [Requirements](#Requirements)
+- [Testing](#Testing)
+
 ### Introduction
 Transcription factors (TFs) are regulatory proteins thatbind specific sequence motifs in the genome to activate orrepress transcription of target genes, thus genomes can beclassified as bound or not bound for a specific TF. The goalof this challenge is to implement some Machine Learningalgorithms for DNA sequence classification.
 
