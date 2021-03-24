@@ -74,7 +74,7 @@ print("===================================================================")
 criterion = nn.BCEWithLogitsLoss()
 optimizer = torch.optim.Adam(model.ckn_model.parameters(), lr=args.lr)
 patience = 6 if args.noise > 0 else 4
-lr_scheduler = ReduceLROnPlateau( optimizer, factor=0.25, patience=patience, min_lr=1e-4)
+lr_scheduler = ReduceLROnPlateau( optimizer, factor=0.01, patience=patience, min_lr=1e-4)
 
 #---------------------------------------------------------------------------
 #                                Training
