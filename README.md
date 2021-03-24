@@ -19,12 +19,34 @@ Due to the ability of deep learning methods to extract robust and useful feature
 
 ### Requirements
 The experiments were performed using Python 3.8.5 with the following Python packages:
-* [numpy](http://www.numpy.org/) == 1.14.1
+* [numpy](http://www.numpy.org/) == 1.18.5
 * [pandas](https://pandas.pydata.org/) == 0.25.3
 * [tqdm](https://tqdm.github.io/) == 4.30.0
-* cvxopt
-* scipy
+* [cvxopt](https://cvxopt.org/) == 1.2.5
+* [scipy](https://www.scipy.org/) == 1.3.3
 
 For Deep learning method, you need to install some additional libraries:
 * [torch](https://pytorch.org/) == 0.4.0
-* sklearn
+* [sklearn](https://scikit-learn.org/stable/) == 0.22.2
+
+### Testing
+To test results using numeric data, choose the corresponding parameters for each method and kernel and put into your terminal:
+`
+python main_numeric.py --path data/ --out-path results/
+                       --method CSVM --C 5. --iters 100
+                       --solver CVX --PCA False
+                       --kernel rbf --gamma 0.01
+                       --cross-val True --kfolds 5
+                       --trw True  --normalize False 
+                       --save True
+`
+To test results using sequences directly, choose also the corresponding parameters for each method and kernel and put into your terminal:
+`
+python main_sequence.py --path data/ --out-path results/
+                        --method CSVM --C 5. --iters 100
+                        --solver CVX --PCA False
+                        --kernel spectrum --nplets 10
+                        --trw True  --normalize False 
+                        --save True
+
+`
