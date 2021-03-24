@@ -1,4 +1,4 @@
-# DataChallenge---DNA-Classification
+# DataChallenge - DNA-Classification
 
 <p float="center">
   <img src="Image/DNA_image.jpg" width="900">
