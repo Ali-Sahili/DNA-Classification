@@ -75,3 +75,8 @@ python Deep_method/main.py --path ../data/ --kernel_func exp --kernel_args 0.2
                            --stride 1 1 1
                            --use_cuda False
 ```
+
+To reproduce our best results, put into your terminal:
+```
+python start.py
+```
