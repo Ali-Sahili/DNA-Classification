@@ -44,7 +44,7 @@ For Deep learning method, you need to install some additional libraries:
 * [sklearn](https://scikit-learn.org/stable/) == 0.22.2
 
 ### Testing
-To test results using numeric data, choose the corresponding parameters for each method and kernel and put into your terminal:
+To test results using numeric data, choose the corresponding parameters for each method and kernel:
 ```
 python main_numeric.py --path data/ --out-path results/
                        --method CSVM --C 5. --iters 100
@@ -55,7 +55,7 @@ python main_numeric.py --path data/ --out-path results/
                        --save True
 ```
 
-To test results using sequences directly, choose also the corresponding parameters for each method and kernel and put into your terminal:
+To test results using sequences directly, choose also the corresponding parameters for each method and kernel:
 ```
 python main_sequence.py --path data/ --out-path results/
                         --method CSVM --C 5. --iters 100
@@ -65,7 +65,7 @@ python main_sequence.py --path data/ --out-path results/
                         --save True
 ```
 
-In addition, to work with deep learning method, choose your parameter and put into your terminal:
+In addition, to work with deep learning method, choose your parameter:
 ```
 python Deep_method/main.py --path ../data/ --kernel_func exp --kernel_args 0.2
                            --alpha 1e-4 --penalty l1 --noise 0.01
