@@ -13,6 +13,7 @@
 - [Deep learning](#Deep_learning)
 - [Requirements](#Requirements)
 - [Testing](#Testing)
+- [References](#References)
 
 ### Introduction
 Transcription factors (TFs) are regulatory proteins thatbind specific sequence motifs in the genome to activate orrepress transcription of target genes, thus genomes can beclassified as bound or not bound for a specific TF. The goalof this challenge is to implement some Machine Learningalgorithms for DNA sequence classification.
@@ -80,3 +81,49 @@ To reproduce our best results, put into your terminal:
 ```
 python start.py
 ```
+
+### References
+<a id="1">[1]</a> 
+@incollection{leslie2001spectrum,
+  title={The spectrum kernel: A string kernel for SVM protein classification},
+  author={Leslie, Christina and Eskin, Eleazar and Noble, William Stafford},
+  booktitle={Biocomputing 2002},
+  pages={564--575},
+  year={2001},
+  publisher={World Scientific}
+}
+<a id="1">[2]</a> 
+[Efficient Sequence Modeling with String Kernels](https://mstrazar.github.io/tutorial/python/machine-learning/2018/08/31/string-kernels.html)
+
+<a id="1">[3]</a> 
+[Local Alignment Lecture](https://www.cs.cmu.edu/~ckingsf/bioinfo-lectures/local.pdf)
+
+<a id="1">[4]</a> 
+[The Kernel Cookbook: Advice on Covariance functions by David Duvenaud](http://www.cs.toronto.edu/~duvenaud/cookbook/index.html)
+
+<a id="1">[5]</a>
+@article{chrysanthos2015theoretical,
+  title={Theoretical properties and implementation of the one-sided mean kernel for time series},
+  author={Chrysanthos, Nicolas and Beauseroy, Pierre and Snoussi, Hichem and Grall-Ma{\"e}s, Edith},
+  journal={Neurocomputing},
+  volume={169},
+  pages={196--204},
+  year={2015},
+  publisher={Elsevier}
+}
+
+<a id="1">[6]</a>
+[Support Vector Machines and Kernels for Computational Biology](http://www.raetschlab.org/lectures/ismb09tutorial/handout.pdf)
+
+<a id="1">[7]</a> 
+@article{chen2019biological,
+  title={Biological sequence modeling with convolutional kernel networks},
+  author={Chen, Dexiong and Jacob, Laurent and Mairal, Julien},
+  journal={Bioinformatics},
+  volume={35},
+  number={18},
+  pages={3294--3302},
+  year={2019},
+  publisher={Oxford University Press}
+}
+
