@@ -14,6 +14,7 @@
 - [Requirements](#Requirements)
 - [Testing](#Testing)
 - [References](#References)
+- [Acknowledgments](#Acknowledgments)
 
 ### Introduction
 Transcription factors (TFs) are regulatory proteins thatbind specific sequence motifs in the genome to activate orrepress transcription of target genes, thus genomes can beclassified as bound or not bound for a specific TF. The goalof this challenge is to implement some Machine Learningalgorithms for DNA sequence classification.
@@ -104,3 +105,7 @@ python start.py
 <a id="1">[7]</a> 
 [Biological sequence modeling with convolutional kernel networks](https://hal.inria.fr/hal-01632912v3/document)
 
+### Acknowledgments
+- [StringKernelSVM by Tim_Shenkao](https://github.com/timshenkao/StringKernelSVM/blob/master/stringSVM.py)
+- [Kernel DNA Classification by Shahine](https://github.com/shahineb/kernel_dna_classification)
+- [CKN model implementation by CHEN Dexiong](https://gitlab.inria.fr/dchen/CKN-seq)
