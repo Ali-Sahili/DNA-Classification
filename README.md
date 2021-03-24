@@ -9,8 +9,8 @@
 - [Introduction](#Introduction)
 - [Classifiers](#Classifiers)
 - [Kernels on Numeric Data](#Kernels_on_Numeric_Data)
-- [Kernels on sequences](#Kernels on sequences)
-- [Deep learning](#Deep learning)
+- [Kernels on sequences](#Kernels_on_sequences)
+- [Deep learning](#Deep_learning)
 - [Requirements](#Requirements)
 - [Testing](#Testing)
 
