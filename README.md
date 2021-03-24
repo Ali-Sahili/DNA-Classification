@@ -31,8 +31,7 @@ For Deep learning method, you need to install some additional libraries:
 
 ### Testing
 To test results using numeric data, choose the corresponding parameters for each method and kernel and put into your terminal:
-`
-
+```
 python main_numeric.py --path data/ --out-path results/
 
                        --method CSVM --C 5. --iters 100
@@ -46,11 +45,11 @@ python main_numeric.py --path data/ --out-path results/
                        --trw True  --normalize False 
                        
                        --save True
-`
+```
 
 To test results using sequences directly, choose also the corresponding parameters for each method and kernel and put into your terminal:
 
-`
+```
 python main_sequence.py --path data/ --out-path results/
 
                         --method CSVM --C 5. --iters 100
@@ -62,4 +61,4 @@ python main_sequence.py --path data/ --out-path results/
                         --trw True  --normalize False
                         
                         --save True
-`
+```
