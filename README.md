@@ -62,7 +62,7 @@ To test results using sequences directly, choose also the corresponding paramete
 python3 main_sequence.py --path data/ --out-path results/
                         --method CSVM --C 5. --iters 100
                         --solver CVX --PCA False
-                        --kernel spectrum --nplets 10
+                        --kernel spectrum --nplets 8
                         --trw True  --normalize False
                         --save True
 ```
@@ -78,7 +78,7 @@ python3 Deep_method/main.py --path ../data/ --kernel_func exp --kernel_args 0.2
                            --use_cuda False
 ```
 
-To reproduce our best results, put into your terminal:
+To reproduce our best results, put into your terminal (note that, with MisMatch and k > 8, the fast implementation take a lot of RAM space, thus we change the implementation at the expense of loosing speed):
 ```
 python3 start.py
 ```
