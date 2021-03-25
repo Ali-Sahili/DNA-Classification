@@ -48,7 +48,7 @@ For Deep learning method, you need to install some additional libraries:
 ### Testing
 To test results using numeric data, choose the corresponding parameters for each method and kernel:
 ```
-python main_numeric.py --path data/ --out-path results/
+python3 main_numeric.py --path data/ --out-path results/
                        --method CSVM --C 5. --iters 100
                        --solver CVX --PCA False
                        --kernel rbf --gamma 0.01
@@ -59,7 +59,7 @@ python main_numeric.py --path data/ --out-path results/
 
 To test results using sequences directly, choose also the corresponding parameters for each method and kernel:
 ```
-python main_sequence.py --path data/ --out-path results/
+python3 main_sequence.py --path data/ --out-path results/
                         --method CSVM --C 5. --iters 100
                         --solver CVX --PCA False
                         --kernel spectrum --nplets 10
@@ -69,7 +69,7 @@ python main_sequence.py --path data/ --out-path results/
 
 In addition, to work with deep learning method, choose your parameter:
 ```
-python Deep_method/main.py --path ../data/ --kernel_func exp --kernel_args 0.2
+python3 Deep_method/main.py --path ../data/ --kernel_func exp --kernel_args 0.2
                            --alpha 1e-4 --penalty l1 --noise 0.01
                            --lr 0.01 --epochs 500
                            --n_motifs 128 256 128
@@ -80,7 +80,7 @@ python Deep_method/main.py --path ../data/ --kernel_func exp --kernel_args 0.2
 
 To reproduce our best results, put into your terminal:
 ```
-python start.py
+python3 start.py
 ```
 
 ### References
