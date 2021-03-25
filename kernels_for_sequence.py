@@ -10,9 +10,6 @@ from scipy import sparse
 # http://www.raetschlab.org/lectures/ismb09tutorial/handout.pdf
 # I add specific links for some kernels with additional explanations or python-codes
 
-# Fisher scores: 
-# https://proceedings.neurips.cc/paper/2002/file/12b1e42dc0746f22cf361267de07073f-Paper.pdf
-
 #-----------------------------------------------------------------------------------
 #                               Spectrum Kernel
 #        https://www.ics.uci.edu/~welling/teatimetalks/kernelclub04/spectrum.pdf
@@ -70,10 +67,12 @@ def substring_mismatch_kernel(s, t, k=3, delta=1, m=1, combinations=None):
     return sum(((miss(s[i:i + k], t[d + i:d + i + k]) <= m)
                 for i, d in combinations
                 if i + d + k <= L and i + d >= 0))
+                
 #-----------------------------------------------------------------------------------
-#                      Substring Kernel with Mismatches Fast version (sparse vectors + some small tricks in
-#                      addition to the vectorized version inspired from: https://github.com/shahineb/kernel_dna_classification
-
+#                    Substring Kernel with Mismatches Fast version 
+#         sparse vectors + some small tricks in addition to the vectorized version 
+#           inspired from: https://github.com/shahineb/kernel_dna_classification
+#-----------------------------------------------------------------------------------
 def order_arrays(X1, X2):
     """Sorts arrays by length
     Args:
@@ -215,9 +214,10 @@ def substring_mismatch_kernel_fast(X1, X2, n=3, k=1, charset='ATCG', norm=False)
 
 
 #-----------------------------------------------------------------------------------
-#                      Weighted (according to pos) Substring Kernel with Mismatches Fast version (sparse vectors + some small tricks in
-#                      addition to the vectorized version inspired from: https://github.com/shahineb/kernel_dna_classification
-
+#    Weighted (according to pos) Substring Kernel with Mismatches Fast version 
+#    (sparse vectors + some small tricks in addition to the vectorized version 
+#      inspired from: https://github.com/shahineb/kernel_dna_classification
+#-----------------------------------------------------------------------------------
 def count_pattern_mismatch_weighted(pattern, count_dict, neighbors, pos_dict, i):
     for neighbor in neighbors[pattern]:
         count_dict[neighbor] += 1

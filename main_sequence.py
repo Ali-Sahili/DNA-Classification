@@ -1,12 +1,13 @@
 import argparse
 from KR import KLR, KRR
-from KPCA import rbf_kernel_pca
 from kernels import *
 import numpy as np
 from utils import *
-from KSVM import LargeMarginClassifier, C_SVM
 
-# Training settings
+
+#---------------------------------------------------------------------------
+#                               Parameters settings
+#---------------------------------------------------------------------------
 parser = argparse.ArgumentParser(description='Data Callenge training script')
 parser.add_argument('--path', type=str, default='data', 
                     metavar='D',help="folder where data is located.")
@@ -52,6 +53,10 @@ parser.add_argument('--save-kernel', type=bool, default=False, metavar='N',
                     help='Save kernel matrix (default: True)')
 parser.add_argument('--val-ratio', type=float, default=0.2, metavar='N',
                     help='validation ratio')
+parser.add_argument('--Ensembling', type=bool, default=False, metavar='N',
+                    help='Ensembling several results on different training sets.')
+parser.add_argument('--number-of-runs', type=int, default=1, metavar='N',
+                    help='number of runs of training for ensembling.')
 args = parser.parse_args()
 
 
@@ -72,7 +77,7 @@ print("size of dataset1: ", X_seq_1.shape, X_seq_test_1.shape, Y_1.shape)
 X_seq_2 = read_sequence(args.path + "/Xtr2.csv", type_="numpy")
 X_seq_test_2 = read_sequence(args.path + "/Xte2.csv", type_="numpy")
 Y_2 = read_labels(args.path + "/Ytr2.csv")
-print("size of dataset0: ", X_seq_2.shape, X_seq_test_2.shape, Y_2.shape)
+print("size of dataset2: ", X_seq_2.shape, X_seq_test_2.shape, Y_2.shape)
 
 if args.trw:
     X_seq = np.concatenate([X_seq_0,X_seq_1,X_seq_2])
@@ -172,26 +177,50 @@ else:
 #---------------------------------------------------------------------------
 #                    Training and Prediction phase 
 #---------------------------------------------------------------------------
-if args.trw:
-    # train and predict of the whole dataset
-    pred_test = fit_and_predict( algo=algo, X=X_seq, y=Y, X_test=X_seq_test, verbose=True)
-else:
-    # Train and predict for each dataset apart
-    pred_test_0 = fit_and_predict(algo=algo, X=X_seq_0, y=Y_0, X_test=X_seq_test_0, verbose=True, suffix=args.save_name+ str(0), save=args.save_kernel, ratio=args.val_ratio)
-    pred_test_1 = fit_and_predict(algo=algo, X=X_seq_1, y=Y_1, X_test=X_seq_test_1, verbose=True, suffix=args.save_name+ str(1), save=args.save_kernel, ratio=args.val_ratio)
-    pred_test_2 = fit_and_predict(algo=algo, X=X_seq_2, y=Y_2, X_test=X_seq_test_2, verbose=True, suffix=args.save_name+ str(2), save=args.save_kernel, ratio=args.val_ratio)
+for i in range(0, args.number_of_runs):
+    if not args.Ensembling:
+       assert args.number_of_runs==1  
+         
+    if args.trw:
+       # train and predict of the whole dataset
+       pred_test = fit_and_predict( algo=algo, X=X_seq, y=Y, X_test=X_seq_test, verbose=True)
+    else:
+       # Train and predict for each dataset apart
+       pred_test_0 = fit_and_predict(algo=algo, X=X_seq_0, y=Y_0, X_test=X_seq_test_0, 
+        verbose=True, suffix=args.save_name+ str(0), save=args.save_kernel, ratio=args.val_ratio)
+       pred_test_1 = fit_and_predict(algo=algo, X=X_seq_1, y=Y_1, X_test=X_seq_test_1, 
+        verbose=True, suffix=args.save_name+ str(1), save=args.save_kernel, ratio=args.val_ratio)
+       pred_test_2 = fit_and_predict(algo=algo, X=X_seq_2, y=Y_2, X_test=X_seq_test_2, 
+        verbose=True, suffix=args.save_name+ str(2), save=args.save_kernel, ratio=args.val_ratio)
 
 #---------------------------------------------------------------------------
 #                               Save Results
 #---------------------------------------------------------------------------
-# Save results in the right format
-if args.save:
-    print("Saving...")
-    if args.trw:
-        save_results(pred_test, args.out_path, filename="results_all_"+args.kernel)
-    else:
-        save_results_(pred_test_0, pred_test_1, pred_test_2, args.out_path, 
-                                               filename="results_"+args.kernel)
+    # Save results in the right format
+    if args.save:
+        print("Saving...")
+        if args.trw:
+            save_results(pred_test, args.out_path, filename= str(i)+"_results_"+args.kernel)
+        else:
+            save_results_(pred_test_0, pred_test_1, pred_test_2, args.out_path, 
+                                               filename= str(i) + "_results_"+args.kernel)
+
+
+if args.Ensembling:
+    csv_file = '0_results_'+ args.kernel +'.csv'
+    csv = pd.read_csv(csv_file)
+    combined = csv.copy()
+
+    for i in range(1, args.number_of_runs):
+        csv_file = str(i) + '_results_'+ args.kernel +'.csv'
+        csv = pd.read_csv(csv_file)
+        combined['Bound'] += csv['Bound'] 
+
+    for i in range(len(combined['Bound'])):
+        combined['Bound'][i] = int( combined['Bound'][i] >= 5)
+ 
+    combined.to_csv('Yte.csv', index=False)
+
 #---------------------------------------------------------------------------
 #                                    END
 #---------------------------------------------------------------------------

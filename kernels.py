@@ -161,7 +161,7 @@ def RBF_Gram_Matrix(X, Y, kernel="RBF", gamma=0.01, degree=2, shift=2, normalize
             gram_matrices = [ker1(X, X), ker2(X, X), ker3(X, X)]
             return  gram_matrices
 
-        for i in tqdm(range(n), desc="Computing Gram Matrix"):
+        for i in tqdm(range(n), desc="Computing Gram Matrix len-0"):
             #for j in tqdm(range(i,n), desc="Nested loop"):
             for j in range(i,n):
                 if kernel == "wdk":
@@ -189,7 +189,7 @@ def RBF_Gram_Matrix(X, Y, kernel="RBF", gamma=0.01, degree=2, shift=2, normalize
             gram_matrices = [ker1(X, Y).T, ker2(X, Y).T, ker3(X, Y).T]
             return  gram_matrices
 
-        for i in tqdm(range(len_X), desc="Computing Gram Matrix"):
+        for i in tqdm(range(len_X), desc="Computing Gram Matrix -"):
             #for j in tqdm(range(i,len_Y), desc="Nested loop"):
             for j in range(i,len_Y):
                 for j in range(i, n):

@@ -13,11 +13,11 @@ out_path = "./"
 method = "CSVM"
 C = 1.
 
-kernel = "mismatch"
+kernel = "substring_mis"
 nplets = 9
 
 val_ratio = 0.2
-
+number_of_runs = 9
 
 #---------------------------------------------------------------------------
 #                    Prepare Data (train, test, labels)
@@ -36,7 +36,7 @@ print("size of dataset1: ", X_seq_1.shape, X_seq_test_1.shape, Y_1.shape)
 X_seq_2 = read_sequence(path + "/Xtr2.csv", type_="numpy")
 X_seq_test_2 = read_sequence(path + "/Xte2.csv", type_="numpy")
 Y_2 = read_labels(path + "/Ytr2.csv")
-print("size of dataset0: ", X_seq_2.shape, X_seq_test_2.shape, Y_2.shape)
+print("size of dataset2: ", X_seq_2.shape, X_seq_test_2.shape, Y_2.shape)
 
 
 #---------------------------------------------------------------------------
@@ -46,12 +46,13 @@ print("size of dataset0: ", X_seq_2.shape, X_seq_test_2.shape, Y_2.shape)
 print('**************  CSVM  *****************')
 algo = C_SVM( kernel=kernel, C=C, solver="BFGS", normalize=False, nplets=nplets)
 
-print("*****  mismatch k=" + str(nplets) + "*****")
+print("********  Mismatch Kernel k=" + str(nplets) + "  ********")
 
 #---------------------------------------------------------------------------
 #                          Training and Prediction phase 
 #---------------------------------------------------------------------------
-for i in range(9):
+for i in range(number_of_runs):
+    # running several times with 80% training set and 20% val set randomly splited
     pred_test_0 = fit_and_predict(algo=algo, X=X_seq_0, y=Y_0, X_test=X_seq_test_0, verbose=True,
                                   save=False, ratio=val_ratio)
 
@@ -64,7 +65,7 @@ for i in range(9):
     # Save results in the right format
     print("Saving...")
     save_results_(pred_test_0, pred_test_1, pred_test_2, out_path, 
-                   filename= str(i)"_results_mismatch")
+                   filename= str(i)+"_results_mismatch")
 
 
 
@@ -72,30 +73,15 @@ for i in range(9):
 #---------------------------------------------------------------------------
 #                                Ensembling
 #---------------------------------------------------------------------------
-csv_1 = '0_results_mismatch.csv'
-csv_2 = '1_results_mismatch.csv'
-csv_3 = '2_results_mismatch.csv'
-csv_4 = '3_results_mismatch.csv'
-csv_5 = '4_results_mismatch.csv'
-csv_6 = '5_results_mismatch.csv'
-csv_7 = '6_results_mismatch.csv'
-csv_8 = '7_results_mismatch.csv'
-csv_9 = '8_results_mismatch.csv'
 
-csv1 = pd.read_csv(csv_1)
-csv2 = pd.read_csv(csv_2)
-csv3 = pd.read_csv(csv_3)
-csv4 = pd.read_csv(csv_4)
-csv5 = pd.read_csv(csv_5)
-csv6 = pd.read_csv(csv_6)
-csv7 = pd.read_csv(csv_7)
-csv8 = pd.read_csv(csv_8)
-csv9 = pd.read_csv(csv_9)
+csv_file = '0_results_mismatch.csv'
+csv = pd.read_csv(csv_file)
+combined = csv.copy()
 
-
-combined = csv1.copy()
-
-combined['Bound'] = csv1['Bound'] + csv2['Bound'] + csv3['Bound'] + csv4['Bound'] + csv5['Bound'] + csv6['Bound'] + csv7['Bound'] + csv8['Bound'] + csv9['Bound']
+for i in range(1, number_of_runs):
+    csv_file = str(i) + '_results_mismatch.csv'
+    csv = pd.read_csv(csv_file)
+    combined['Bound'] += csv['Bound'] 
 
 for i in range(len(combined['Bound'])):
    combined['Bound'][i] = int( combined['Bound'][i] >= 5)
