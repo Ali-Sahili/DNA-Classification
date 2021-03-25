@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from KSVM import C_SVM
 from utils import read_sequence, read_labels, fit_and_predict, save_results_
 
@@ -17,8 +18,6 @@ nplets = 9
 
 val_ratio = 0.2
 
-save_kernel = True
-save_name = "mismatch"
 
 #---------------------------------------------------------------------------
 #                    Prepare Data (train, test, labels)
@@ -52,18 +51,57 @@ print("*****  mismatch k=" + str(nplets) + "*****")
 #---------------------------------------------------------------------------
 #                          Training and Prediction phase 
 #---------------------------------------------------------------------------
-pred_test_0 = fit_and_predict(algo=algo, X=X_seq_0, y=Y_0, X_test=X_seq_test_0, verbose=True, suffix=save_name+ str(0), save=save_kernel, ratio=val_ratio)
+for i in range(9):
+    pred_test_0 = fit_and_predict(algo=algo, X=X_seq_0, y=Y_0, X_test=X_seq_test_0, verbose=True,
+                                  save=False, ratio=val_ratio)
 
-pred_test_1 = fit_and_predict(algo=algo, X=X_seq_1, y=Y_1, X_test=X_seq_test_1, verbose=True, suffix=save_name+ str(1), save=save_kernel, ratio=val_ratio)
+    pred_test_1 = fit_and_predict(algo=algo, X=X_seq_1, y=Y_1, X_test=X_seq_test_1, verbose=True,
+                                  save=False, ratio=val_ratio)
 
-pred_test_2 = fit_and_predict(algo=algo, X=X_seq_2, y=Y_2, X_test=X_seq_test_2, verbose=True, suffix=save_name+ str(2), save=save_kernel, ratio=val_ratio)
+    pred_test_2 = fit_and_predict(algo=algo, X=X_seq_2, y=Y_2, X_test=X_seq_test_2, verbose=True,
+                                 save=False, ratio=val_ratio)
+
+    # Save results in the right format
+    print("Saving...")
+    save_results_(pred_test_0, pred_test_1, pred_test_2, out_path, 
+                   filename= str(i)"_results_mismatch")
+
+
+
 
 #---------------------------------------------------------------------------
-#                               Save Results
+#                                Ensembling
 #---------------------------------------------------------------------------
-# Save results in the right format
-print("Saving...")
-save_results_(pred_test_0, pred_test_1, pred_test_2, out_path, filename="results_" + kernel)
+csv_1 = '0_results_mismatch.csv'
+csv_2 = '1_results_mismatch.csv'
+csv_3 = '2_results_mismatch.csv'
+csv_4 = '3_results_mismatch.csv'
+csv_5 = '4_results_mismatch.csv'
+csv_6 = '5_results_mismatch.csv'
+csv_7 = '6_results_mismatch.csv'
+csv_8 = '7_results_mismatch.csv'
+csv_9 = '8_results_mismatch.csv'
+
+csv1 = pd.read_csv(csv_1)
+csv2 = pd.read_csv(csv_2)
+csv3 = pd.read_csv(csv_3)
+csv4 = pd.read_csv(csv_4)
+csv5 = pd.read_csv(csv_5)
+csv6 = pd.read_csv(csv_6)
+csv7 = pd.read_csv(csv_7)
+csv8 = pd.read_csv(csv_8)
+csv9 = pd.read_csv(csv_9)
+
+
+combined = csv1.copy()
+
+combined['Bound'] = csv1['Bound'] + csv2['Bound'] + csv3['Bound'] + csv4['Bound'] + csv5['Bound'] + csv6['Bound'] + csv7['Bound'] + csv8['Bound'] + csv9['Bound']
+
+for i in range(len(combined['Bound'])):
+   combined['Bound'][i] = int( combined['Bound'][i] >= 5)
+ 
+combined.to_csv('Yte.csv', index=False)
+
 
 #---------------------------------------------------------------------------
 #                                    END
